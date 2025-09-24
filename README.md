@@ -16,6 +16,8 @@ Quick Start
 * Git
 * GCC - (GNU C Compiler)
 * C Standard Library
+* Docker
+
 
 
 #### How to Build
@@ -30,22 +32,17 @@ To build a project:
     ```bash
     cd weather-station-c
     ```
-4. Compile build script.
+4. Build docker image.
     ```bash
-    gcc -o nob nob.c
+    docker build -t weather-station-c .
     ```
-5. Run build script.
-    ```bash
-    ./nob
-    ```
-
 
 #### How to Run
 To run the project:
 
-1. Run the main executable in bin.
+1. Run the docker container.
     ```bash
-    bin/main
+    docker run --rm -it weather-station-c
     ```
 
 

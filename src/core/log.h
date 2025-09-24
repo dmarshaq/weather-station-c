@@ -5,7 +5,7 @@
 
 #include "core/core.h"
 
-typedef enum log_level : u8 {
+typedef enum log_level {
     LOG_LEVEL_INFO    = 0,
     LOG_LEVEL_WARNING = 1,
     LOG_LEVEL_ERROR   = 2,
