@@ -36,13 +36,13 @@ To build a project:
    ```bash
    ./run.sh
    ```
-   - Or build docker image (If not using linux).
+   - Or build docker image (If not using Linux).
    ```bash
    docker build -t weather-station-c .
    ```
     
 #### How to Run
-To run the project (If not using linux):
+To run the project (If not using Linux):
 
 1. Run the docker container.
     ```bash
