@@ -16,7 +16,7 @@ Quick Start
 * Git
 * GCC - (GNU C Compiler)
 * C Standard Library
-* Docker
+* Docker - (If not using Linux)
 
 
 
@@ -32,13 +32,17 @@ To build a project:
     ```bash
     cd weather-station-c
     ```
-4. Build docker image.
-    ```bash
-    docker build -t weather-station-c .
-    ```
-
+4. Run the script to compile and run the program.
+   ```bash
+   ./run.sh
+   ```
+   - Or build docker image (If not using linux).
+   ```bash
+   docker build -t weather-station-c .
+   ```
+    
 #### How to Run
-To run the project:
+To run the project (If not using linux):
 
 1. Run the docker container.
     ```bash
