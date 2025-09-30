@@ -5,6 +5,8 @@ FROM debian:12
 RUN apt-get update && apt-get install -y && apt-get install -y dos2unix \
     build-essential \
     gcc \
+    libsdl2-2.0-0 \
+    libsdl2-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -23,6 +25,7 @@ RUN find . -type f \( -name "*.sh" -o -name "*.c" -o -name "*.h" \) -exec dos2un
 
 # Gives exec permission to run.sh
 RUN chmod +x /weather-station-c/run.sh
+
 
 
 # Run the script

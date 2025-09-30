@@ -11,6 +11,7 @@
 
 // Defining libs.
 #define nob_cc_libs(cmd)    nob_cmd_append(cmd, "-lm")
+#define nob_sdl_libs(cmd)    nob_cmd_append(cmd, "-lSDL2main", "-lSDL2")
 
 
 // Defining project paths.
@@ -226,6 +227,7 @@ int main(int argc, char **argv) {
 
     nob_cmd_append(&cmd, "-L"BIN_DIR, "-lcore");
     nob_cc_libs(&cmd);
+    nob_sdl_libs(&cmd);
 
     if (!nob_cmd_run_sync_and_reset(&cmd)) return 1;
     reset_saved_strings();
