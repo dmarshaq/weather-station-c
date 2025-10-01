@@ -17,23 +17,6 @@ static Application_State app_state;
 
 
 int main(void) {
-    FILE* fptr = fopen("file.csv", "a");
-    Data_Point stuff;
-
-    time_t rawtime;
-    struct tm *timeInfo;
-    time(&rawtime);
-    timeInfo = localtime(&rawtime);
-
-    stuff.temperature = 1;
-    stuff.humidity = 2;
-    stuff.wind_speed = 3;
-    stuff.wind_direction = 4;
-    stuff.pressure = 5;
-    stuff.precipitation = 6;
-    stuff.uv_index = 7;
-    stuff.timestamp = *timeInfo;
-    output_append_data_point(fptr, &stuff);
 
     // Set all values to zero in app_state.
     app_state = (Application_State) {0};
