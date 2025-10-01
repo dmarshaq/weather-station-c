@@ -115,7 +115,7 @@ int main(void) {
         
         // Outputting data to the .csv file, if such exists, every 60 seconds.
         if (output_timer > output_period) {
-            if (output_append_data_point(app_state.devices_info.csv_output) != 0) {
+            if (output_append_data_point(app_state.devices_info.csv_output, &app_state.current_data_point) != 0) {
                 LOG_ERROR("Couldn't output data point changes to csv file.");
                 goto error_return;
             }

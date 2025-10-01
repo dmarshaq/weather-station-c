@@ -1,6 +1,8 @@
 #ifndef WEATHER_STATION_OUTPUT_H
 #define WEATHER_STATION_OUTPUT_H
 
+#include "main/devices.h"
+
 #include <stdio.h>
 
 /**
@@ -10,6 +12,6 @@
  * If error occured returns -1.
  * @Important: csv file is guranteed to be open in append mode.
  */
-int output_append_data_point(FILE *csv);
+int output_append_data_point(FILE *csv, Data_Point *data_point);
 
 #endif
