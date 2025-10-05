@@ -2,7 +2,13 @@
 
 
 int devices_init(Devices_Info *devices_info) {
-    // @Incomplete.
+    FILE *file = fopen("data.csv", "a");
+
+    if(file==NULL) {
+        return -1;
+    }
+
+    devices_info->csv_output = file;
     return 0;
 }
 
