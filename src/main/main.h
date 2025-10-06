@@ -19,17 +19,26 @@ typedef struct time_info {
     u32 accumilated_time;
 } Time_Info;
 
+typedef struct window_info {
+    SDL_Window *ptr;
+    int width;
+    int height;
+} Window_Info;
 
+
+#define DATA_LENGTH 100
 
 typedef struct application_state {
     Time_Info time_info;            // Stores information about frame time.
 
-    SDL_Window *window;             // Pointer to the window displayed.
+    Window_Info window;             // Information about the window.
 
     SDL_Renderer *renderer;         // Pointer to the renderer that draws to the screen.
 
     Devices_Info devices_info;      // Devices internal state.
-    Data_Point current_data_point;  // Current data that is collected in current frame.
+
+    Data_Point data[DATA_LENGTH];
+    Data_Point *current_data_point;  // Current data that is collected in current frame.
 
                                     // This information updates, as frame passes.
 

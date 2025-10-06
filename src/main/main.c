@@ -1,11 +1,14 @@
 #include "main/main.h"
 
 #include "main/devices.h"
+#include "main/drawer.h"
 #include "main/output.h"
 
 #include "core/log.h"
 #include "core/core.h"
+
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 
 
 
@@ -29,8 +32,16 @@ int main(void) {
     
     LOG_INFO("Initted SDL video.");
 
+    // Initializing SDL ttf.
+    if (TTF_Init() != 0) {
+        LOG_ERROR("TTF_Init Error: %s.", SDL_GetError());
+        return 1;
+    }
+    
+    LOG_INFO("Initted SDL ttf.");
+
     // Creating SDL Window.
-    app_state.window = SDL_CreateWindow(
+    app_state.window.ptr = SDL_CreateWindow(
         "SDL2 Window",
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
@@ -38,7 +49,7 @@ int main(void) {
         SDL_WINDOW_SHOWN
     );
 
-    if (!app_state.window) {
+    if (!app_state.window.ptr) {
         LOG_ERROR("SDL_CreateWindow Error: %s.", SDL_GetError());
         SDL_Quit();
         return 1;
@@ -47,10 +58,10 @@ int main(void) {
     LOG_INFO("Created SDL_Window.");
 
     // Creating SDL renderer.
-    app_state.renderer = SDL_CreateRenderer(app_state.window, -1, SDL_RENDERER_SOFTWARE);
+    app_state.renderer = SDL_CreateRenderer(app_state.window.ptr, -1, SDL_RENDERER_SOFTWARE);
     if (!app_state.renderer) {
         LOG_ERROR("SDL_CreateRenderer Error: %s.", SDL_GetError());
-        SDL_DestroyWindow(app_state.window);
+        SDL_DestroyWindow(app_state.window.ptr);
         SDL_Quit();
         return 1;
     }
@@ -66,6 +77,31 @@ int main(void) {
     }
 
     LOG_INFO("Initted devices module.");
+
+
+    if (drawer_init(&app_state.window, app_state.renderer) != 0) {
+        LOG_ERROR("Couldn't initialize drawer module.");
+        goto error_return;
+    }
+
+    LOG_INFO("Initted drawer module.");
+
+
+
+    // Get font resources.
+    TTF_Font *font_open_sans = TTF_OpenFont("res/font/OpenSans.ttf", 16);
+
+    if (font_open_sans == NULL) {
+        LOG_ERROR("Couldn't load font 'res/font/OpenSans.ttf', Error: %s.", SDL_GetError());
+        goto error_return;
+    }
+
+    LOG_INFO("Successfully loaded font.");
+
+
+
+    // Set current_data_point to be the first data point in the array.
+    app_state.current_data_point = app_state.data;
 
 
     // Wait until window is closed.
@@ -100,11 +136,12 @@ int main(void) {
                 app_state.quit = 1;
         }
 
-
+        // Updating window size, if it changed or anything happnes.
+        SDL_GetWindowSize(app_state.window.ptr, &app_state.window.width, &app_state.window.height);
 
 
         // Collecting data from devices.
-        if (devices_collect_data(&app_state.current_data_point) != 0) {
+        if (devices_collect_data(app_state.current_data_point) != 0) {
             LOG_ERROR("Couldn't collect data points from devices.");
             goto error_return;
         }
@@ -116,7 +153,7 @@ int main(void) {
         
         // Outputting data to the .csv file, if such exists, every 60 seconds.
         if (output_timer > output_period) {
-            if (output_append_data_point(app_state.devices_info.csv_output, &app_state.current_data_point) != 0) {
+            if (output_append_data_point(app_state.devices_info.csv_output, app_state.current_data_point) != 0) {
                 LOG_ERROR("Couldn't output data point changes to csv file.");
                 goto error_return;
             }
@@ -127,18 +164,24 @@ int main(void) {
 
 
 
+        // Move to the next data point in the array, wrap array if reached the end.
+        app_state.current_data_point++;
+        if (app_state.current_data_point - app_state.data >= DATA_LENGTH) {
+            app_state.current_data_point = app_state.data;
+        }
+
+
+
+
         // Clear screen with black.
         SDL_SetRenderDrawColor(app_state.renderer, 0, 0, 0, 255);
         SDL_RenderClear(app_state.renderer);
 
-        // Set color to draw.
-        SDL_SetRenderDrawColor(app_state.renderer, 255, 255, 255, 255);
 
-        // Simple rectangle drawing.
-        SDL_Rect rect = {
-            20, 20, 40, 40
-        };
-        SDL_RenderFillRect(app_state.renderer, &rect);
+
+        drawer_graph_data(app_state.current_data_point - app_state.data + 1, app_state.data, GRAPH_FLAG_TEMPERATURE);
+
+        drawer_text("SDL TTF Rendering", font_open_sans, (SDL_Color) {255, 255, 255, 255});
 
         // Display rendered shapes on the scree.
         SDL_RenderPresent(app_state.renderer);
@@ -147,7 +190,7 @@ int main(void) {
 
     // Clean up.
     SDL_DestroyRenderer(app_state.renderer);
-    SDL_DestroyWindow(app_state.window);
+    SDL_DestroyWindow(app_state.window.ptr);
     SDL_Quit();
 
     return 0;
@@ -156,7 +199,7 @@ int main(void) {
 error_return:
     // Error return.
     SDL_DestroyRenderer(app_state.renderer);
-    SDL_DestroyWindow(app_state.window);
+    SDL_DestroyWindow(app_state.window.ptr);
     SDL_Quit();
 
     return 1; 

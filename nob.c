@@ -11,7 +11,7 @@
 
 // Defining libs.
 #define nob_cc_libs(cmd)    nob_cmd_append(cmd, "-lm")
-#define nob_sdl_libs(cmd)    nob_cmd_append(cmd, "-lSDL2main", "-lSDL2")
+#define nob_sdl_libs(cmd)    nob_cmd_append(cmd, "-lSDL2main", "-lSDL2", "-lSDL2_ttf")
 
 
 // Defining project paths.
