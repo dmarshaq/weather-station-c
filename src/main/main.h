@@ -26,7 +26,7 @@ typedef struct window_info {
 } Window_Info;
 
 
-#define DATA_LENGTH 100
+#define DATA_LENGTH 50
 
 typedef struct application_state {
     Time_Info time_info;            // Stores information about frame time.

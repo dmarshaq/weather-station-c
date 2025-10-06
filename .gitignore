@@ -3,6 +3,7 @@ build/*
 bin/*
 nob
 nob.old
+data.csv
 
 
 # Prerequisites

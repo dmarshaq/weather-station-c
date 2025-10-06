@@ -28,16 +28,19 @@ int drawer_init(Window_Info *w, SDL_Renderer *r) {
 
 
 void drawer_graph_data(int length, Data_Point *data, Graph_Flags flags) {
-    float pixel_width  = 340;
-    float pixel_height = 180;
+    float pixel_width  = window->width;
+    float pixel_height = window->height;
 
     // These values dictate how grid looks, and they should depend on what is being graphed.
     float graph_min_y = -10.0;
-    float graph_max_y = 10.0;
+    float graph_max_y = 30.0;
     float graph_cell_height = 5.0;
+
 
     int cell_count_y = (int)((graph_max_y - graph_min_y) / graph_cell_height);
     int pixel_cell_height = pixel_height / cell_count_y;
+
+    float data2pix = pixel_cell_height / graph_cell_height;
     
 
     SDL_SetRenderDrawColor(renderer, 55, 55, 55, 255);
@@ -56,6 +59,14 @@ void drawer_graph_data(int length, Data_Point *data, Graph_Flags flags) {
 
     // Drawing graphing line itsef.
     SDL_SetRenderDrawColor(renderer, 255, 55, 55, 255);
+
+
+    // @Temporary: For now just draw temperature.
+    float x_step = pixel_width / (DATA_LENGTH - 1);
+    for (int i = 0; i < length - 1; i++) {
+        SDL_RenderDrawLine(renderer, draw_x + i * x_step, pixel_height - (draw_y + data[i].temperature * data2pix), draw_x + (i + 1) * x_step, pixel_height - (draw_y + data[i + 1].temperature * data2pix));
+    }
+
 
 }
 

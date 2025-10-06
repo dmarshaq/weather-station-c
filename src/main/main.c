@@ -12,8 +12,9 @@
 
 
 
-static const u32 UPDATE_STEP_TIME = 10;     // 10 Milliseconds per single update loop.
-                                            // Equal to about: 1 Frame / 0.01 Seconds = 100 FPS.
+static const u32 UPDATE_STEP_TIME = 500;     // 500 Milliseconds per single update loop.
+                                             // Equal to about: 1 Frame / 0.5 Seconds = 2 FPS.
+                                             // Because sensors do not usually update faster then 0.5 seconds.
 
 
 static Application_State app_state;
@@ -46,7 +47,7 @@ int main(void) {
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
         640, 480,
-        SDL_WINDOW_SHOWN
+        SDL_WINDOW_FULLSCREEN
     );
 
     if (!app_state.window.ptr) {
@@ -112,8 +113,6 @@ int main(void) {
         app_state.time_info.accumilated_time += app_state.time_info.current_time - app_state.time_info.last_update_time;
         app_state.time_info.last_update_time = app_state.time_info.current_time;
 
-        // If in total we didn't wait for 10 ms to pass we skip updating, to have each frame be executed consistently 1 frame each 10 ms. 
-        // Assuming UPDATE_STEP_TIME = 10 ms.
         if (app_state.time_info.accumilated_time < UPDATE_STEP_TIME) {
             continue;
         }
@@ -179,9 +178,9 @@ int main(void) {
 
 
 
-        drawer_graph_data(app_state.current_data_point - app_state.data + 1, app_state.data, GRAPH_FLAG_TEMPERATURE);
+        drawer_graph_data(app_state.current_data_point - app_state.data, app_state.data, GRAPH_FLAG_TEMPERATURE);
 
-        drawer_text("SDL TTF Rendering", font_open_sans, (SDL_Color) {255, 255, 255, 255});
+        drawer_text("Press ESCAPE to exit        Demo of fake data displayed", font_open_sans, (SDL_Color) {255, 255, 255, 255});
 
         // Display rendered shapes on the scree.
         SDL_RenderPresent(app_state.renderer);

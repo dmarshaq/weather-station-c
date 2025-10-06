@@ -19,7 +19,7 @@ int output_append_data_point(FILE *csv, Data_Point *data_point) {
         data_point->precipitation,
         data_point->uv_index,
         data_point->timestamp.tm_year + 1900,
-        data_point->timestamp.tm_mon,
+        data_point->timestamp.tm_mon + 1, // tm_mon is zero based so just add 1.
         data_point->timestamp.tm_mday,
         data_point->timestamp.tm_hour,
         data_point->timestamp.tm_min,
