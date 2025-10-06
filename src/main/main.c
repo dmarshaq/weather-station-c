@@ -17,6 +17,7 @@ static Application_State app_state;
 
 
 int main(void) {
+
     // Set all values to zero in app_state.
     app_state = (Application_State) {0};
 

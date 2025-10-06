@@ -2,10 +2,30 @@
 #include "main/devices.h"
 
 #include <stdio.h>
+#include <string.h>
 
 
 
 int output_append_data_point(FILE *csv, Data_Point *data_point) {
-    // @Incomplete.
+    if(csv == NULL){
+        return -1;
+    }
+    if(fprintf(csv, "%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%i-%02i-%02i,%02i:%02i:%02i\n",
+        data_point->temperature,
+        data_point->humidity,
+        data_point->wind_speed,
+        data_point->wind_direction,
+        data_point->pressure,
+        data_point->precipitation,
+        data_point->uv_index,
+        data_point->timestamp.tm_year + 1900,
+        data_point->timestamp.tm_mon,
+        data_point->timestamp.tm_mday,
+        data_point->timestamp.tm_hour,
+        data_point->timestamp.tm_min,
+        data_point->timestamp.tm_sec
+    ) < 1){
+        return -1;
+    }
     return 0;
 }
