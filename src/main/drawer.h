@@ -21,17 +21,34 @@ typedef enum graph_flags : u8 {
 } Graph_Flags;
 
 
+/**
+ * Inits drawer.
+ */
 int drawer_init(Window_Info *window, SDL_Renderer *renderer);
+
+/**
+ * Draws rectangle to the screen.
+ */
+void drawer_rect(int x, int y, int width, int height, SDL_Color color);
 
 /**
  * Draws graph to the screen.
  */
-void drawer_graph_data(int length, Data_Point *data, Graph_Flags flags);
+void drawer_graph_data(int x, int y, int width, int height, int length, Data_Point *data, Graph_Flags flags);
 
 /**
  * Draws specified string to the screen.
  */
-void drawer_text(char *text, TTF_Font *font, SDL_Color color);
+void drawer_text(int x, int y, char *text, TTF_Font *font, SDL_Color color);
 
+/**
+ * Draws specified string center to the screen.
+ */
+void drawer_text_centered(int x, int y, int width, char *text, TTF_Font *font, SDL_Color color);
+
+/**
+ * Draws specified string justified right to the screen.
+ */
+void drawer_text_right(int x, int y, int width, char *text, TTF_Font *font, SDL_Color color);
 
 #endif

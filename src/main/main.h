@@ -26,7 +26,9 @@ typedef struct window_info {
 } Window_Info;
 
 
+
 #define DATA_LENGTH 50
+#define MAX_DEVICES 8
 
 typedef struct application_state {
     Time_Info time_info;            // Stores information about frame time.
@@ -35,7 +37,8 @@ typedef struct application_state {
 
     SDL_Renderer *renderer;         // Pointer to the renderer that draws to the screen.
 
-    Devices_Info devices_info;      // Devices internal state.
+    Devices_Info devices_info;      // Devices handler internal state.
+    Device devices[MAX_DEVICES];
 
     Data_Point data[DATA_LENGTH];
     Data_Point *current_data_point;  // Current data that is collected in current frame.

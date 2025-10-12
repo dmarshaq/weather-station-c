@@ -4,11 +4,44 @@
 #include <stdio.h>
 #include <time.h>
 
-// As we start working with hardware this struct will expand.
-// Essentially it will contain information about the opened text and device files.
+
+
+typedef enum device_state {
+    OFFLINE,
+    ONLINE,
+} Device_State;
+
+typedef enum device_type {
+    DEVICE_UNKNOWN,
+    DEVICE_USB_DRIVE,
+    DEVICE_I2C_SENSOR,
+    DEVICE_ARDUINO,
+} Device_Type;
+
+typedef struct device {
+    char name[32];
+    Device_Type type;
+    Device_State state;
+
+    char path[128];
+    int fd;
+} Device;
+
+
+
+
+
+
+#define MAX_DEVICES 8
+
 typedef struct devices_info {
+    int devices_length;
+    Device devices[MAX_DEVICES];
+
+
     FILE *csv_output;
 } Devices_Info;
+
 
 
 
@@ -33,6 +66,16 @@ typedef struct data_point {
  * Returns -1 if error occured.
  */
 int devices_init(Devices_Info *devices_info);
+
+
+int devices_detect();
+
+/**
+ * Tries to connect to every detected device,
+ * it modifies devices state stored in the devices info.
+ * If critical error occurs it returns -1.
+ */
+int devices_connect();
 
 /**
  * Goes through sensors and outputs data into a specified data_point.

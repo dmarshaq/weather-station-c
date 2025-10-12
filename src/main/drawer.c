@@ -26,10 +26,21 @@ int drawer_init(Window_Info *w, SDL_Renderer *r) {
 }
 
 
+void drawer_rect(int x, int y, int width, int height, SDL_Color color) {
+    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
 
-void drawer_graph_data(int length, Data_Point *data, Graph_Flags flags) {
-    float pixel_width  = window->width;
-    float pixel_height = window->height;
+    // Simple rectangle drawing.
+    SDL_Rect rect = {
+        x, y, width, height
+    };
+    SDL_RenderFillRect(renderer, &rect);
+}
+
+void drawer_graph_data(int x, int y, int width, int height, int length, Data_Point *data, Graph_Flags flags) {
+    float pixel_width  = width;
+    float pixel_height = height;
+
+    // y = y + height;
 
     // These values dictate how grid looks, and they should depend on what is being graphed.
     float graph_min_y = -10.0;
@@ -45,16 +56,16 @@ void drawer_graph_data(int length, Data_Point *data, Graph_Flags flags) {
 
     SDL_SetRenderDrawColor(renderer, 55, 55, 55, 255);
 
-    // Simple rectangle drawing.
-    SDL_Rect rect = {
-        draw_x, draw_y, pixel_width, pixel_height
-    };
-    SDL_RenderFillRect(renderer, &rect);
-
     // Drawing horizontal grid lines.
     SDL_SetRenderDrawColor(renderer, 105, 105, 105, 255);
-    for (int i = 0; i < cell_count_y; i++) {
-        SDL_RenderDrawLine(renderer, draw_x, pixel_height - (draw_y + i * pixel_cell_height), draw_x + pixel_width, pixel_height - (draw_y + i * pixel_cell_height));
+    for (int i = 0; i < cell_count_y + 1; i++) {
+        SDL_RenderDrawLine(renderer, x, y + pixel_height - (i * pixel_cell_height), x + pixel_width, y + pixel_height - (i * pixel_cell_height));
+    }
+
+    // Drawing vertical grid lines, always 9.
+    SDL_SetRenderDrawColor(renderer, 105, 105, 105, 255);
+    for (int i = 0; i < 9; i++) {
+        SDL_RenderDrawLine(renderer, x + (pixel_width / 8) * i, y, x + (pixel_width / 8) * i, y + pixel_height);
     }
 
     // Drawing graphing line itsef.
@@ -64,13 +75,14 @@ void drawer_graph_data(int length, Data_Point *data, Graph_Flags flags) {
     // @Temporary: For now just draw temperature.
     float x_step = pixel_width / (DATA_LENGTH - 1);
     for (int i = 0; i < length - 1; i++) {
-        SDL_RenderDrawLine(renderer, draw_x + i * x_step, pixel_height - (draw_y + data[i].temperature * data2pix), draw_x + (i + 1) * x_step, pixel_height - (draw_y + data[i + 1].temperature * data2pix));
+        SDL_RenderDrawLine(renderer, x + i * x_step, y + pixel_height - (data[i].temperature * data2pix), x + (i + 1) * x_step, y + pixel_height - (data[i + 1].temperature * data2pix));
     }
 
 
 }
 
-void drawer_text(char *text, TTF_Font *font, SDL_Color color) {
+
+void drawer_text(int x, int y, char *text, TTF_Font *font, SDL_Color color) {
     // As TTF_RenderText_Solid could only be used on
     // SDL_Surface then it is neccessary to create the surface first.
     SDL_Surface* surface_text = TTF_RenderText_Solid(font, text, color); 
@@ -83,7 +95,7 @@ void drawer_text(char *text, TTF_Font *font, SDL_Color color) {
     TTF_SizeText(font, text, &w, &h);
 
     SDL_Rect rect = {
-        draw_x, draw_y, w, h,
+        x, y, w, h,
     };
 
     SDL_RenderCopy(renderer, texture_text, NULL, &rect);
@@ -92,3 +104,56 @@ void drawer_text(char *text, TTF_Font *font, SDL_Color color) {
     SDL_FreeSurface(surface_text);
     SDL_DestroyTexture(texture_text);
 }
+
+void drawer_text_centered(int x, int y, int width, char *text, TTF_Font *font, SDL_Color color) {
+    // As TTF_RenderText_Solid could only be used on
+    // SDL_Surface then it is neccessary to create the surface first.
+    SDL_Surface* surface_text = TTF_RenderText_Solid(font, text, color); 
+
+    // Convert it into a texture
+    SDL_Texture* texture_text = SDL_CreateTextureFromSurface(renderer, surface_text);
+
+    int w, h;
+
+    TTF_SizeText(font, text, &w, &h);
+
+    x = x + (width * 0.5f) - (w * 0.5f);
+
+    SDL_Rect rect = {
+        x, y, w, h,
+    };
+
+    SDL_RenderCopy(renderer, texture_text, NULL, &rect);
+
+    // Freeing surface and texture
+    SDL_FreeSurface(surface_text);
+    SDL_DestroyTexture(texture_text);
+}
+
+
+void drawer_text_right(int x, int y, int width, char *text, TTF_Font *font, SDL_Color color) {
+    // As TTF_RenderText_Solid could only be used on
+    // SDL_Surface then it is neccessary to create the surface first.
+    SDL_Surface* surface_text = TTF_RenderText_Solid(font, text, color); 
+
+    // Convert it into a texture
+    SDL_Texture* texture_text = SDL_CreateTextureFromSurface(renderer, surface_text);
+
+    int w, h;
+
+    TTF_SizeText(font, text, &w, &h);
+
+    x = x + width - w;
+
+    SDL_Rect rect = {
+        x, y, w, h,
+    };
+
+    SDL_RenderCopy(renderer, texture_text, NULL, &rect);
+
+    // Freeing surface and texture
+    SDL_FreeSurface(surface_text);
+    SDL_DestroyTexture(texture_text);
+}
+
+
