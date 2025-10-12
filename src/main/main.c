@@ -17,6 +17,15 @@ static const u32 UPDATE_STEP_TIME = 500;     // 500 Milliseconds per single upda
                                              // Because sensors do not usually update faster then 0.5 seconds.
 
 
+// Variables for styling, color values taken from design.
+static const SDL_Color COLOR_TEXT = {216, 217, 218, 255};
+static const SDL_Color COLOR_OK = {101, 201, 116, 255};
+static const SDL_Color COLOR_ERR = {213, 111, 111, 255};
+static const SDL_Color COLOR_PANEL = {33, 33, 36, 255};
+
+
+
+
 static Application_State app_state;
 
 
@@ -103,7 +112,8 @@ int main(void) {
 
 
     // Set current_data_point to be the first data point in the array.
-    app_state.current_data_point = app_state.data;
+    app_state.stream.current_data_point = app_state.stream.data;
+    app_state.stream.data_tail = app_state.stream.data;
 
 
     // Wait until window is closed.
@@ -144,7 +154,7 @@ int main(void) {
 
         // Detecting devices. In case any new will appear
         static const float detect_period = 5.0f; // 5 seconds.
-        static float detect_timer = 15.1f; // Start at 15.1, to execute at first frame.
+        static float detect_timer = detect_period + 1.0f; // Setup to execute at first frame.
 
         // Outputting data to the .csv file, if such exists, every 60 seconds.
         if (detect_timer > detect_period) {
@@ -160,7 +170,7 @@ int main(void) {
 
 
         // Collecting data from devices.
-        if (devices_collect_data(app_state.current_data_point) != 0) {
+        if (devices_collect_data(app_state.stream.current_data_point) != 0) {
             LOG_ERROR("Couldn't collect data points from devices.");
             goto error_return;
         }
@@ -174,7 +184,7 @@ int main(void) {
         
         // Outputting data to the .csv file, if such exists, every 60 seconds.
         if (output_timer > output_period) {
-            if (output_append_data_point(app_state.devices_info.csv_output, app_state.current_data_point) != 0) {
+            if (output_append_data_point(app_state.devices_info.csv_output, app_state.stream.current_data_point) != 0) {
                 LOG_ERROR("Couldn't output data point changes to csv file.");
                 goto error_return;
             }
@@ -185,18 +195,7 @@ int main(void) {
 
 
 
-        // Move to the next data point in the array, wrap array if reached the end.
-        app_state.current_data_point++;
-        if (app_state.current_data_point - app_state.data >= DATA_LENGTH) {
-            app_state.current_data_point = app_state.data;
-        }
 
-
-        SDL_Rect rect;
-        SDL_Color text_color = {216, 217, 218, 255};
-        SDL_Color ok_color = {101, 201, 116, 255};
-        SDL_Color err_color = {213, 111, 111, 255};
-        SDL_Color panel_color = {33, 33, 36, 255};
 
         int line_height = TTF_FontHeight(font_open_sans_14);
 
@@ -206,61 +205,61 @@ int main(void) {
         SDL_RenderClear(app_state.renderer);
 
         // Health check.
-        drawer_rect(10, 10, 340, 175, panel_color);
-        drawer_text_centered(10, 15, 340, "Health Check", font_open_sans_16, text_color);
+        drawer_rect(10, 10, 340, 175, COLOR_PANEL);
+        drawer_text_centered(10, 15, 340, "Health Check", font_open_sans_16, COLOR_TEXT);
         for (int i = 0; i < app_state.devices_info.devices_length; i++) {
-            drawer_text(20, 42 + line_height * i, app_state.devices_info.devices[i].name, font_open_sans_16, text_color);
+            drawer_text(20, 42 + line_height * i, app_state.devices_info.devices[i].name, font_open_sans_16, COLOR_TEXT);
             switch (app_state.devices_info.devices[i].state) {
                 case OFFLINE:
-                    drawer_text_right(20, 42 + line_height * i, 320, "Offline", font_open_sans_14, err_color);
+                    drawer_text_right(20, 42 + line_height * i, 320, "Offline", font_open_sans_14, COLOR_ERR);
                     break;
                 case ONLINE:
-                    drawer_text_right(20, 42 + line_height * i, 320, "Online", font_open_sans_14, ok_color);
+                    drawer_text_right(20, 42 + line_height * i, 320, "Online", font_open_sans_14, COLOR_OK);
                     break;
             }
         }
 
 
         // Information.
-        drawer_rect(360, 10, 430, 175, panel_color);
-        drawer_text_centered(360, 15, 430, "Information", font_open_sans_16, text_color);
+        drawer_rect(360, 10, 430, 175, COLOR_PANEL);
+        drawer_text_centered(360, 15, 430, "Information", font_open_sans_16, COLOR_TEXT);
 
         char value[16];
 
 
-        drawer_text(370, 42 + line_height * 0, "Temperature", font_open_sans_14, text_color);
-        snprintf(value, 16, "%.1f*C", app_state.current_data_point->temperature);
-        drawer_text(690, 42 + line_height * 0, value, font_open_sans_14, text_color);
+        drawer_text(370, 42 + line_height * 0, "Temperature", font_open_sans_14, COLOR_TEXT);
+        snprintf(value, 16, "%.1f*C", app_state.stream.current_data_point->temperature);
+        drawer_text(690, 42 + line_height * 0, value, font_open_sans_14, COLOR_TEXT);
 
 
-        drawer_text(370, 42 + line_height * 1, "Humidity", font_open_sans_14, text_color);
-        snprintf(value, 16, "%.0f\%RH", app_state.current_data_point->humidity);
-        drawer_text(690, 42 + line_height * 1, value, font_open_sans_14, text_color);
+        drawer_text(370, 42 + line_height * 1, "Humidity", font_open_sans_14, COLOR_TEXT);
+        snprintf(value, 16, "%.0f%%RH", app_state.stream.current_data_point->humidity);
+        drawer_text(690, 42 + line_height * 1, value, font_open_sans_14, COLOR_TEXT);
 
-        drawer_text(370, 42 + line_height * 2, "Wind Speed", font_open_sans_14, text_color);
-        snprintf(value, 16, "%.1fm/s", app_state.current_data_point->wind_speed);
-        drawer_text(690, 42 + line_height * 2, value, font_open_sans_14, text_color);
+        drawer_text(370, 42 + line_height * 2, "Wind Speed", font_open_sans_14, COLOR_TEXT);
+        snprintf(value, 16, "%.1fm/s", app_state.stream.current_data_point->wind_speed);
+        drawer_text(690, 42 + line_height * 2, value, font_open_sans_14, COLOR_TEXT);
 
-        drawer_text(370, 42 + line_height * 3, "Wind Direction", font_open_sans_14, text_color);
-        snprintf(value, 16, "%.0f*", app_state.current_data_point->wind_direction);
-        drawer_text(690, 42 + line_height * 3, value, font_open_sans_14, text_color);
+        drawer_text(370, 42 + line_height * 3, "Wind Direction", font_open_sans_14, COLOR_TEXT);
+        snprintf(value, 16, "%.0f*", app_state.stream.current_data_point->wind_direction);
+        drawer_text(690, 42 + line_height * 3, value, font_open_sans_14, COLOR_TEXT);
 
-        drawer_text(370, 42 + line_height * 4, "Atmospheric Pressure", font_open_sans_14, text_color);
-        snprintf(value, 16, "%.1fhPa", app_state.current_data_point->pressure);
-        drawer_text(690, 42 + line_height * 4, value, font_open_sans_14, text_color);
+        drawer_text(370, 42 + line_height * 4, "Atmospheric Pressure", font_open_sans_14, COLOR_TEXT);
+        snprintf(value, 16, "%.1fhPa", app_state.stream.current_data_point->pressure);
+        drawer_text(690, 42 + line_height * 4, value, font_open_sans_14, COLOR_TEXT);
 
-        drawer_text(370, 42 + line_height * 5, "Precipitation", font_open_sans_14, text_color);
-        snprintf(value, 16, "%.1fmm", app_state.current_data_point->precipitation);
-        drawer_text(690, 42 + line_height * 5, value, font_open_sans_14, text_color);
+        drawer_text(370, 42 + line_height * 5, "Precipitation", font_open_sans_14, COLOR_TEXT);
+        snprintf(value, 16, "%.1fmm", app_state.stream.current_data_point->precipitation);
+        drawer_text(690, 42 + line_height * 5, value, font_open_sans_14, COLOR_TEXT);
 
-        drawer_text(370, 42 + line_height * 6, "UV Intensity", font_open_sans_14, text_color);
-        snprintf(value, 16, "%.0f", app_state.current_data_point->uv_index);
-        drawer_text(690, 42 + line_height * 6, value, font_open_sans_14, text_color);
+        drawer_text(370, 42 + line_height * 6, "UV Intensity", font_open_sans_14, COLOR_TEXT);
+        snprintf(value, 16, "%.0f", app_state.stream.current_data_point->uv_index);
+        drawer_text(690, 42 + line_height * 6, value, font_open_sans_14, COLOR_TEXT);
 
         
         // Graph.
-        drawer_rect(10, 195, 780, 275, panel_color);
-        drawer_graph_data(80, 210, 632, 232, app_state.current_data_point - app_state.data, app_state.data, GRAPH_FLAG_TEMPERATURE);
+        drawer_rect(10, 195, 780, 275, COLOR_PANEL);
+        drawer_graph_data(80, 210, 632, 232, &app_state.stream, (Data_Graph_Specification) {0});
 
 
         drawer_text_centered(0, 600, app_state.window.width, "Press ESCAPE to exit        Demo of fake data displayed", font_open_sans_16, (SDL_Color) {255, 255, 255, 255});
@@ -269,6 +268,21 @@ int main(void) {
 
         // Display rendered shapes on the scree.
         SDL_RenderPresent(app_state.renderer);
+
+
+
+        // Move to the next data point in the array, wrap array if reached the end.
+        app_state.stream.current_data_point++;
+        if (app_state.stream.current_data_point - app_state.stream.data >= DATA_LENGTH) {
+            app_state.stream.current_data_point = app_state.stream.data;
+        }
+
+        if (app_state.stream.current_data_point == app_state.stream.data_tail) {
+            app_state.stream.data_tail++;
+            if (app_state.stream.data_tail - app_state.stream.data >= DATA_LENGTH) {
+                app_state.stream.data_tail = app_state.stream.data;
+            }
+        }
 
     }
 

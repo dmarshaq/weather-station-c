@@ -36,20 +36,17 @@ void drawer_rect(int x, int y, int width, int height, SDL_Color color) {
     SDL_RenderFillRect(renderer, &rect);
 }
 
-void drawer_graph_data(int x, int y, int width, int height, int length, Data_Point *data, Graph_Flags flags) {
-    float pixel_width  = width;
-    float pixel_height = height;
-
-    // y = y + height;
+void drawer_graph_data(int x, int y, int width, int height, Data_Stream *stream, Data_Graph_Specification specs) {
 
     // These values dictate how grid looks, and they should depend on what is being graphed.
     float graph_min_y = -10.0;
     float graph_max_y = 30.0;
     float graph_cell_height = 5.0;
+    u8 struct_member_value_offset = 0; // offset in bytes to memory withing data_point struct where temperature float is located.
 
 
     int cell_count_y = (int)((graph_max_y - graph_min_y) / graph_cell_height);
-    int pixel_cell_height = pixel_height / cell_count_y;
+    int pixel_cell_height = height / cell_count_y;
 
     float data2pix = pixel_cell_height / graph_cell_height;
     
@@ -59,26 +56,39 @@ void drawer_graph_data(int x, int y, int width, int height, int length, Data_Poi
     // Drawing horizontal grid lines.
     SDL_SetRenderDrawColor(renderer, 105, 105, 105, 255);
     for (int i = 0; i < cell_count_y + 1; i++) {
-        SDL_RenderDrawLine(renderer, x, y + pixel_height - (i * pixel_cell_height), x + pixel_width, y + pixel_height - (i * pixel_cell_height));
+        SDL_RenderDrawLine(renderer, x, y + height - (i * pixel_cell_height), x + width, y + height - (i * pixel_cell_height));
     }
 
     // Drawing vertical grid lines, always 9.
     SDL_SetRenderDrawColor(renderer, 105, 105, 105, 255);
     for (int i = 0; i < 9; i++) {
-        SDL_RenderDrawLine(renderer, x + (pixel_width / 8) * i, y, x + (pixel_width / 8) * i, y + pixel_height);
+        SDL_RenderDrawLine(renderer, x + (width / 8) * i, y, x + (width / 8) * i, y + height);
     }
 
     // Drawing graphing line itsef.
     SDL_SetRenderDrawColor(renderer, 255, 55, 55, 255);
 
 
-    // @Temporary: For now just draw temperature.
-    float x_step = pixel_width / (DATA_LENGTH - 1);
-    for (int i = 0; i < length - 1; i++) {
-        SDL_RenderDrawLine(renderer, x + i * x_step, y + pixel_height - (data[i].temperature * data2pix), x + (i + 1) * x_step, y + pixel_height - (data[i + 1].temperature * data2pix));
+    float x_step = (float)width / (DATA_LENGTH - 1);
+    
+    Data_Point *current = stream->current_data_point;
+    Data_Point *next = current;
+    
+    for (int i = -1;;) {
+        if (next == stream->data_tail) {
+            break;
+        }
+
+        next--;
+        i++;
+        if (next < stream->data) {
+            next = stream->data + DATA_LENGTH - 1;
+        }
+
+        SDL_RenderDrawLine(renderer, x + width - i * x_step, y + height - ((*(float *)((u8 *)(current) + struct_member_value_offset)) * data2pix), x + width - (i + 1) * x_step, y + height - ((*(float *)((u8 *)(next) + struct_member_value_offset)) * data2pix));
+
+        current = next;
     }
-
-
 }
 
 

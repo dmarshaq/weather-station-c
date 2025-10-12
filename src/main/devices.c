@@ -9,7 +9,7 @@
 #include <dirent.h>
 #include <limits.h>
 #include <libgen.h>
-#include <sys/stat.h>>
+#include <sys/stat.h>
 
 static Devices_Info *dev_info;
 
@@ -139,11 +139,11 @@ void devices_detect_usb() {
 }
 
 void devices_detect_i2c() {
-    // @Todo: Write implementation.
+    // @Incomplete: Write implementation.
 }
 
 void devices_detect_arduino() {
-    // @Todo: Write implementation.
+    // @Incomplete: Write implementation.
 }
 
 int devices_detect() {

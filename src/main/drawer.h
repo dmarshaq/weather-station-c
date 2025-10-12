@@ -10,15 +10,12 @@
 #include <SDL2/SDL_ttf.h>
 
 
-typedef enum graph_flags : u8 {
-    GRAPH_FLAG_TEMPERATURE      = 0x01,
-    GRAPH_FLAG_HUMIDITY         = 0x02,
-    GRAPH_FLAG_WIND_SPEED       = 0x04,
-    GRAPH_FLAG_WIND_DIRECTION   = 0x08,
-    GRAPH_FLAG_PRESSURE         = 0x10,
-    GRAPH_FLAG_PRECIPITATION    = 0x20,
-    GRAPH_FLAG_UV_INDEX         = 0x40,
-} Graph_Flags;
+
+// @Incomplete: Implement struct.
+typedef struct data_graph_specification {
+
+} Data_Graph_Specification;
+
 
 
 /**
@@ -34,7 +31,7 @@ void drawer_rect(int x, int y, int width, int height, SDL_Color color);
 /**
  * Draws graph to the screen.
  */
-void drawer_graph_data(int x, int y, int width, int height, int length, Data_Point *data, Graph_Flags flags);
+void drawer_graph_data(int x, int y, int width, int height, Data_Stream *stream, Data_Graph_Specification specs);
 
 /**
  * Draws specified string to the screen.
