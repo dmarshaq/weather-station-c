@@ -143,7 +143,19 @@ void devices_detect_i2c() {
 }
 
 void devices_detect_arduino() {
-    // @Incomplete: Write implementation.
+    DIR *d = opendir("/dev");
+    if(!d) return;
+
+    struct dirent *entry;
+    while((entry==readdir(d)) != NULL) {
+        //checks based on name arduino pops up as in the OS
+        if(strncmp(entry->d_name, "ttyACM", 6) == 0 || strncmp(entry->d_name, "ttyUSB", 6) == 0) {
+            char path[128];
+            snprintf(path, sizeof(path), "/dev/%s", entry->d_name);
+            devices_add(entry->d_name, DEVICE_ARDUINO, path);
+        }
+    }
+    closedir(d);
 }
 
 int devices_detect() {
