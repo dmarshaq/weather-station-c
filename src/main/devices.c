@@ -10,6 +10,8 @@
 #include <limits.h>
 #include <libgen.h>
 #include <sys/stat.h>
+#include <termios.h>
+#include <fcntl.h>
 
 static Devices_Info *dev_info;
 
@@ -183,4 +185,73 @@ int devices_collect_data(Data_Point *data_point) {
     }
 
     return 0;
+}
+
+char* readSerial(Device device){
+    //256 bit buffer to read from serial port
+    static char read_buf[256];
+    memset(read_buf, 0, sizeof(read_buf));
+    
+    //Open serial port (read only)
+    int serial_port = open(device.path, O_RDONLY);
+    //If error opening serial port, return
+    if(serial_port < 0){
+        LOG_ERROR("Error opening serial port");
+        return read_buf;
+    }
+    //Create termios struct
+    //Helps control serial communication with flags
+    struct termios tty;
+    //Clear memory
+    memset(&tty, 0, sizeof(tty));
+    //Get serial port attributes and store them in tty variable
+    if(tcgetattr(serial_port, &tty) != 0){
+        LOG_ERROR("Error getting termios attributes");
+        close(serial_port);
+        return read_buf;
+    }
+    //Set baud rate (Must match Serial.begin number in Arduino)
+    cfsetispeed(&tty, B9600);
+    //Output speed only required if writing to serial port
+    //cfsetospeed(&tty, B9600);
+    
+    //8 bits, no parity (extra error correction bits), 1 stop bit (8n1)
+    //&= - Bitwise operator where x &= y is equivalent to x = x & y
+    tty.c_cflag &= ~PARENB;
+    tty.c_cflag &= ~CSTOPB;
+    tty.c_cflag &= ~CSIZE;
+    tty.c_cflag |= CS8; //8 bits per byte
+
+    //No flow control
+    tty.c_cflag &= ~CRTSCTS;
+
+    //Turn on read and ignore ctrl lines
+    tty.c_cflag |= CREAD | CLOCAL;
+
+    //Make raw
+    tty.c_lflag &= ~(ICANON | ECHO | ECHOE | ISIG);
+    tty.c_iflag &= ~(IXON | IXOFF | IXANY); // No software flow control
+
+    // Set timeout
+    tty.c_cc[VMIN] = 0;
+    tty.c_cc[VTIME] = 10; // 1 second read timeout
+
+    // Save settings
+    if (tcsetattr(serial_port, TCSANOW, &tty) != 0) {
+        LOG_ERROR("Error setting termios attributes");
+        close(serial_port);
+        return read_buf;
+    }
+
+    // Read data (256 bits)
+    int num_bytes = read(serial_port, &read_buf, sizeof(read_buf));
+
+    if (num_bytes < 0) {
+        LOG_ERROR("Error reading from serial port");
+        close(serial_port);
+        return read_buf;
+    }
+
+    close(serial_port);
+    return read_buf;
 }
