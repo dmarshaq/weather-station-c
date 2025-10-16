@@ -24,7 +24,6 @@ typedef struct device {
     Device_State state;
 
     char path[128];
-    int fd;
 } Device;
 
 
@@ -38,7 +37,6 @@ typedef struct devices_info {
     int devices_length;
     Device devices[MAX_DEVICES];
 
-
     FILE *csv_output;
 } Devices_Info;
 
@@ -48,16 +46,16 @@ typedef struct devices_info {
 // Depending on the actual sensor's output 
 // this struct might change in the future.
 typedef struct data_point {
-    float temperature;        // °C
-    float humidity;           // %RH
+    float temperature;        // °c
+    float humidity;           // %rh
     float wind_speed;         // m/s
     float wind_direction;     // degrees [0–360)
-    float pressure;           // hPa
+    float pressure;           // hpa
     float precipitation;      // mm
     float uv_index;           // 0–15
 
-    struct tm timestamp;	  // Time when data point is recorded.
-                              // Can be formatted to YYYY-MM-DD HH:MM:SS
+    struct tm timestamp;	  // time when data point is recorded.
+                              // can be formatted to yyyy-mm-dd hh:mm:ss
 } Data_Point;
 
 
@@ -67,15 +65,10 @@ typedef struct data_point {
  */
 int devices_init(Devices_Info *devices_info);
 
-
-int devices_detect();
-
 /**
- * Tries to connect to every detected device,
- * it modifies devices state stored in the devices info.
- * If critical error occurs it returns -1.
+ * Tries to detect every device and updates their state, returns non zero value if critical error occured.
  */
-int devices_connect();
+int devices_detect();
 
 /**
  * Goes through sensors and outputs data into a specified data_point.

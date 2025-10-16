@@ -42,7 +42,7 @@ void drawer_graph_data(int x, int y, int width, int height, Data_Stream *stream,
     float graph_min_y = -10.0;
     float graph_max_y = 30.0;
     float graph_cell_height = 5.0;
-    u8 struct_member_value_offset = 0; // offset in bytes to memory withing data_point struct where temperature float is located.
+    u8 struct_member_value_offset = 0; // Offset in bytes to memory withing data_point struct where temperature float is located.
 
 
     int cell_count_y = (int)((graph_max_y - graph_min_y) / graph_cell_height);

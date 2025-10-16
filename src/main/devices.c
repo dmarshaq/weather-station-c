@@ -21,18 +21,9 @@ int devices_init(Devices_Info *devices_info) {
     // Set devices length to zero in the beginning.
     dev_info->devices_length = 0;
 
-
-
-    // Open csv for output of data.
-    // @Todo: Move it to a different part of code, it should execute only if USB we are writting to is found.
     srand(time(NULL));
-    FILE *file = fopen("data.csv", "a");
 
-    if (file == NULL) {
-        return -1;
-    }
 
-    dev_info->csv_output = file;
 
     return 0;
 }
@@ -46,7 +37,7 @@ void devices_add(char *name, Device_Type type, char *path) {
 
     for (int i = 0; i < dev_info->devices_length; i++) {
         if (strcmp(name, dev_info->devices[i].name) == 0) {
-            LOG_WARNING("Added device '%s' already exists, skipping.", name);
+            dev_info->devices[i].state = ONLINE;
             return;
         }
     }
@@ -63,8 +54,7 @@ void devices_add(char *name, Device_Type type, char *path) {
 
     dev_info->devices[dev_info->devices_length] = (Device) {
         .type = type,
-        .state = OFFLINE,
-        .fd = -1,
+        .state = ONLINE,
     };
 
     // Save name.
@@ -130,12 +120,91 @@ void devices_detect_usb() {
         if (is_removable_usb(entry->d_name)) {
             char path[128] = "/dev/";
             strcat(path, entry->d_name);
-            LOG_INFO("Detected removable USB drive: '%s'.", path);
+
+            // LOG_INFO("Detected removable USB drive: '%s'.", path);
+            // LOG_INFO("Assuming there exists 1st partition on usb: '%s1'.", path);
+
+            size_t l = strlen(path);
+
+            if (l > 126) {
+                LOG_ERROR("Detected usb couldn't be added, path buffer overflow, when accessing partition 1.");
+            }
+
+            path[l] = '1';
+            path[l + 1] = '\0';
+
             devices_add(entry->d_name, DEVICE_USB_DRIVE, path);
         }
     }
 
     closedir(d);
+}
+
+int is_mounted_usb(Device *usb, char *mount_path_buffer, size_t mount_path_buffer_size) {
+    FILE *fp = fopen("/proc/mounts", "r");
+    if (!fp) {
+        LOG_ERROR("Couldn't mount usb: couldn't open to read '/proc/mounts' file.");
+        return 0;
+    }
+
+    char dev[256], mount[256], rest[512];
+    int found = 0;
+
+    // Read through mounted usb devices, see if device name matches, if it does, set found to 1 and break.
+    while (fscanf(fp, "%255s %255s %511[^\n]\n", dev, mount, rest) == 3) {
+        // printf("Comparing %s to %s.\n", dev, usb->path);
+        if (strcmp(dev, usb->path) == 0) {
+            strncpy(mount_path_buffer, mount, mount_path_buffer_size - 1);
+            mount_path_buffer[mount_path_buffer_size - 1] = '\0';
+            found = 1;
+            break;
+        }
+    }
+
+    fclose(fp);
+
+    return found;
+}
+
+int mount_usb_device(Device *usb, const char *target) {
+    // using cmd command to do it since it is more robust and easier.
+    char cmd[512];
+    snprintf(cmd, sizeof(cmd), "mkdir -p %s && mount %s %s", target, usb->path, target);
+    return system(cmd);
+}
+
+void devices_ensure_usb_connected(Device *usb) {
+    char mount_path[256];
+
+    if (is_mounted_usb(usb, mount_path, 256) == 0) {
+        // Mount usb here.
+        // strrchar will find the last occurence of '/' and return the pointer to it, example: from "dev/sdb1" we will get "/sdb1".
+        snprintf(mount_path, sizeof(mount_path), "/mnt/usb_%s", strrchr(usb->path, '/') + 1);
+
+        LOG_INFO("Mounting '%s' to '%s'.", usb->name, mount_path);
+        if (mount_usb_device(usb, mount_path) == 0)
+            LOG_INFO("Successfully mounted '%s'.", usb->name);
+    }
+    
+    if (dev_info->csv_output == NULL) {
+        char output_path[512];
+
+        strcpy(output_path, mount_path);
+        strcpy(output_path + strlen(mount_path), "/data.csv");
+
+        // Open csv for output of data.
+        FILE *file = fopen(output_path, "a");
+
+        if (file == NULL) {
+            LOG_ERROR("Couldn't open file to output data on the mounted usb at '%s'.", output_path);
+            perror("error: ");
+            return;
+        }
+
+        dev_info->csv_output = file;
+    }
+    
+    
 }
 
 void devices_detect_i2c() {
@@ -146,16 +215,31 @@ void devices_detect_arduino() {
     // @Incomplete: Write implementation.
 }
 
+void devices_reset_state() {
+    for (int i = 0; i < dev_info->devices_length; i++) {
+        dev_info->devices[i].state = OFFLINE;
+    }
+}
+
 int devices_detect() {
+    devices_reset_state();
+
     devices_detect_usb();
     devices_detect_i2c();
     devices_detect_arduino();
 
-
-    return 0;
-}
-
-int devices_connect() {
+    // Just for test searching other usb.
+    Device *usb = NULL;
+    for (int i = 0; i < dev_info->devices_length; i++) {
+        if (strcmp(dev_info->devices[i].name, "sdb") != 0) {
+            usb = dev_info->devices + i;
+            break;
+        }
+    }
+    
+    if (usb != NULL) {
+        devices_ensure_usb_connected(usb);
+    }
 
     return 0;
 }

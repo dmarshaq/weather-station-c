@@ -151,20 +151,10 @@ int main(void) {
 
 
 
-
-        // Detecting devices. In case any new will appear
-        static const float detect_period = 5.0f; // 5 seconds.
-        static float detect_timer = detect_period + 1.0f; // Setup to execute at first frame.
-
-        // Outputting data to the .csv file, if such exists, every 60 seconds.
-        if (detect_timer > detect_period) {
-            if (devices_detect() != 0) {
-                LOG_ERROR("Couldn't detect devices, critical error occured.");
-                goto error_return;
-            }
-            detect_timer = 0.0f;
+        if (devices_detect() != 0) {
+            LOG_ERROR("Couldn't detect devices, critical error occured.");
+            goto error_return;
         }
-        detect_timer += app_state.time_info.delta_time;
 
 
 
@@ -185,8 +175,7 @@ int main(void) {
         // Outputting data to the .csv file, if such exists, every 60 seconds.
         if (output_timer > output_period) {
             if (output_append_data_point(app_state.devices_info.csv_output, app_state.stream.current_data_point) != 0) {
-                LOG_ERROR("Couldn't output data point changes to csv file.");
-                goto error_return;
+                LOG_WARNING("Couldn't output data point changes to csv file.");
             }
             output_timer = 0.0f;
         }

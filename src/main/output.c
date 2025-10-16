@@ -1,15 +1,24 @@
 #include "main/output.h"
 #include "main/devices.h"
+#include "core/log.h"
 
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
+
+
+int output_flush_file_completely(FILE *csv) {
+    fflush(csv);
+    fsync(fileno(csv));
+}
 
 
 int output_append_data_point(FILE *csv, Data_Point *data_point) {
     if(csv == NULL){
         return -1;
     }
+
     if(fprintf(csv, "%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%i-%02i-%02i,%02i:%02i:%02i\n",
         data_point->temperature,
         data_point->humidity,
@@ -27,5 +36,10 @@ int output_append_data_point(FILE *csv, Data_Point *data_point) {
     ) < 1){
         return -1;
     }
+
+    output_flush_file_completely(csv);
+
+    LOG_INFO("Successfully wrote data to the disk.");
+
     return 0;
 }
