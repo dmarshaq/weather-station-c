@@ -187,13 +187,23 @@ int devices_collect_data(Data_Point *data_point) {
     return 0;
 }
 
-char* readSerial(Device device){
+void readSerial(int serial_port, Data_Point* current_data_point){
     //256 bit buffer to read from serial port
-    static char read_buf[256];
+
+    /* Byte codes
+    0x01 - Temperature
+    0x02 - Humidity
+    0x03 - Wind speed
+    0x04 - Wind direction
+    0x05 - Pressure
+    0x06 - Precipitation
+    0x07 - UV Index
+    */
+
+    tcflush(serial_port, TCIFLUSH);
+    unsigned char read_buf[8];
     memset(read_buf, 0, sizeof(read_buf));
     
-    //Open serial port (read only)
-    int serial_port = open(device.path, O_RDONLY);
     //If error opening serial port, return
     if(serial_port < 0){
         LOG_ERROR("Error opening serial port");
@@ -243,15 +253,54 @@ char* readSerial(Device device){
         return read_buf;
     }
 
-    // Read data (256 bits)
-    int num_bytes = read(serial_port, &read_buf, sizeof(read_buf));
+    // Read data (8 bytes)
+    if(read(serial_port, &read_buf, sizeof(read_buf)) < 0){
+        return;
+    }
 
+    /*
     if (num_bytes < 0) {
         LOG_ERROR("Error reading from serial port");
         close(serial_port);
         return read_buf;
     }
+    */
 
-    close(serial_port);
-    return read_buf;
+    //close(serial_port);
+
+    /* Byte codes
+    0x01 - Temperature
+    0x02 - Humidity
+    0x03 - Wind speed
+    0x04 - Wind direction
+    0x05 - Pressure
+    0x06 - Precipitation
+    0x07 - UV Index
+    */
+
+    switch(read_buf[0]){
+        case 0x01:
+            current_data_point->temperature = *((float*)(read_buf + 1));
+            break;
+        case 0x02:
+            current_data_point->huidity = *((float*)(read_buf + 1));
+            break;
+        case 0x03:
+            current_data_point->wind_speed = *((float*)(read_buf + 1));
+            break;
+        case 0x04:
+            current_data_point->wind_direction = *((float*)(read_buf + 1));
+            break;
+        case 0x05:
+            current_data_point->pressure = *((float*)(read_buf + 1));
+            break;
+        case 0x06:
+            current_data_point->precipitation = *((float*)(read_buf + 1));
+            break;
+        case 0x07:
+            current_data_point->uv_index = *((float*)(read_buf + 1));
+            break;
+    }
+    memset(read_buf, 0, sizeof(read_buf));
+    return;
 }
