@@ -1,23 +1,25 @@
-//Rain gauge (Hall effect sensor)
-
 void setup() {
   Serial.begin(9600);
-  pinMode(A0, INPUT);
+  pinMode(9, INPUT);
 }
 
 const float mmPerTilt = 0.173;
 float mmTotal = 0;
 bool state = 0;
 bool previousState = 0;
+char[16] out;
+
 void loop() {
-  state = analogRead(A0) < 470;
+  state = digitalRead(9) < 470;
   if(state != previousState){
     mmTotal += mmPerTilt;
   }
-  delay(500);
   previousState = state;
-  Serial.print("Total rainfall: ");
-  Serial.print(mmTotal);
-  Serial.print("\n");
-  Serial.println(analogRead(A0));
+
+  memset(out, 0x00, sizeof(out));
+  out[0] = 0x06;
+  memcpy(&out[1], &mmTotal, sizeof(float));
+  Serial.write(out, 16);
+
+  delay(500);
 }

@@ -1,5 +1,3 @@
-//Controls BME280 and LTR390
-
 #include "Adafruit_LTR390.h"
 #include <Adafruit_BME280.h>
 #include <Adafruit_Sensor.h>
@@ -7,6 +5,7 @@
 Adafruit_BME280 bme;
 Adafruit_ltr390 ltr = Adafruit_LTR390();
 const float UVScale = 1; //Scale to multiply raw UV index by to 
+char out[16];
 
 void setup() {
   Serial.begin(9600);
@@ -20,15 +19,30 @@ void setup() {
 
 void loop() {
   //UV
-  Serial.print(ltr.readUVS());
-  Serial.print(" ");
+  memset(out, 0x00, sizeof(out));
+  float num = ltr.readUVS();
+  out[0] = 0x07;
+  memcpy(&out[1], &num, sizeof(float));
+  Serial.write(out, 16);
   //BME280 Temp
-  Serial.print(bme.readTemperature());
-  Serial.print(" ");
+  memset(out, 0x00, sizeof(out));
+  num = bme.readTemperature();
+  out[0] = 0x01;
+  memcpy(&out[1], &num, sizeof(float));
+  Serial.write(out, 16);
   //Pressure (Pascals)
-  Serial.print(bme.readPressure());
-  Serial.print(" ");
-  Serial.print(bme.readHumidity());
-  Serial.print("\n");
+  memset(out, 0x00, sizeof(out));
+  num = bme.readPressure();
+  out[0] = 0x05;
+  memcpy(&out[1], &num, sizeof(float));
+  Serial.write(out, 16);
+
+  //Humidity
+  memset(out, 0x00, sizeof(out));
+  num = bme.readHumidity();
+  out[0] = 0x02;
+  memcpy(&out[1], &num, sizeof(float));
+  Serial.write(out, 16);
+  
   delay(1000);
 }
