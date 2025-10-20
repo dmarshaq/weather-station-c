@@ -243,8 +243,8 @@ void readSerial(int serial_port, Data_Point* current_data_point){
     tty.c_iflag &= ~(IXON | IXOFF | IXANY); // No software flow control
 
     // Set timeout
-    tty.c_cc[VMIN] = 0;
-    tty.c_cc[VTIME] = 10; // 1 second read timeout
+    tty.c_cc[VMIN] = 16; //16 bytes minimum to read
+    tty.c_cc[VTIME] = 0; // No read timeout
 
     // Save settings
     if (tcsetattr(serial_port, TCSANOW, &tty) != 0) {
@@ -283,7 +283,7 @@ void readSerial(int serial_port, Data_Point* current_data_point){
             current_data_point->temperature = *((float*)(read_buf + 1));
             break;
         case 0x02:
-            current_data_point->huidity = *((float*)(read_buf + 1));
+            current_data_point->humidity = *((float*)(read_buf + 1));
             break;
         case 0x03:
             current_data_point->wind_speed = *((float*)(read_buf + 1));
