@@ -46,7 +46,8 @@ void loop() {
   out[0] = 0x02;
   memcpy(&out[1], &num, sizeof(float));
   Serial.write(0xAA);
-  Serial.write(out, 8);
+  Serial.write(out, 7);
+  Serial.write(0xBB);
   
   delay(1000);
 }

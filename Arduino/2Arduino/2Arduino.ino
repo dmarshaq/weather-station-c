@@ -20,7 +20,8 @@ void loop() {
   out[0] = 0x06;
   memcpy(&out[1], &mmTotal, sizeof(float));
   Serial.write(0xAA);
-  Serial.write(out, 8);
+  Serial.write(out, 7);
+  Serial.write(0xBB);
 
   delay(500);
 }
