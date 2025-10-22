@@ -255,7 +255,7 @@ void readSerial(int serial_port, Data_Point* current_data_point){
 
     //Get to start of message
     char a = 0x00;
-    while(a != '\n'){
+    while(a != 0xAA){
         read(serial_port, &a, 1);
     }
 
