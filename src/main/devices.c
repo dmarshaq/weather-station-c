@@ -369,72 +369,74 @@ void readSerial(int serial_port, Data_Point* current_data_point){
     }
 
     //Get to start of message
-    char a = 0x00;
-    while(a != 0xAA){
-        read(serial_port, &a, 1);
-    }
-
-    // Read data (8 bytes)
-    int total_read = 0;
-    int bytes_to_read = 8;
-    while (total_read < bytes_to_read) {
-        int n = read(serial_port, read_buf + total_read, bytes_to_read - total_read);
-        if (n > 0) {
-            total_read += n;
-        } else if (n == 0) {
-            // Timeout or no data
-            break;
-        } else {
-            LOG_ERROR("read error");
-            break;
+    while(read_buf[7] != 0xBB){
+        char a = 0x00;
+        while(a != 0xAA){
+            read(serial_port, &a, 1);
         }
-    }
-    /*
-    if (num_bytes < 0) {
-        LOG_ERROR("Error reading from serial port");
-        close(serial_port);
-        return read_buf;
-    }
-    */
 
-    //close(serial_port);
+        // Read data (8 bytes)
+        int total_read = 0;
+        int bytes_to_read = 8;
+        while (total_read < bytes_to_read) {
+            int n = read(serial_port, read_buf + total_read, bytes_to_read - total_read);
+            if (n > 0) {
+                total_read += n;
+            } else if (n == 0) {
+                // Timeout or no data
+                break;
+            } else {
+                LOG_ERROR("read error");
+                break;
+            }
+        }
+        /*
+        if (num_bytes < 0) {
+            LOG_ERROR("Error reading from serial port");
+            close(serial_port);
+            return read_buf;
+        }
+        */
 
-    /* Byte codes
-    0x01 - Temperature
-    0x02 - Humidity
-    0x03 - Wind speed
-    0x04 - Wind direction
-    0x05 - Pressure
-    0x06 - Precipitation
-    0x07 - UV Index
-    */
-    /*
-    for(int i = 0; i < sizeof(read_buf) - 1; i++){
-        printf("%#x ", read_buf[i]);//*(read_buf + i));
-    }
-    */
-    switch(read_buf[0]){
-        case 0x01:
-            current_data_point->temperature = *((float*)(read_buf + 1));
-            break;
-        case 0x02:
-            current_data_point->humidity = *((float*)(read_buf + 1));
-            break;
-        case 0x03:
-            current_data_point->wind_speed = *((float*)(read_buf + 1));
-            break;
-        case 0x04:
-            current_data_point->wind_direction = *((float*)(read_buf + 1));
-            break;
-        case 0x05:
-            current_data_point->pressure = *((float*)(read_buf + 1));
-            break;
-        case 0x06:
-            current_data_point->precipitation = *((float*)(read_buf + 1));
-            break;
-        case 0x07:
-            current_data_point->uv_index = *((float*)(read_buf + 1));
-            break;
+        //close(serial_port);
+
+        /* Byte codes
+        0x01 - Temperature
+        0x02 - Humidity
+        0x03 - Wind speed
+        0x04 - Wind direction
+        0x05 - Pressure
+        0x06 - Precipitation
+        0x07 - UV Index
+        */
+        /*
+        for(int i = 0; i < sizeof(read_buf) - 1; i++){
+            printf("%#x ", read_buf[i]);//*(read_buf + i));
+        }
+        */
+        switch(read_buf[0]){
+            case 0x01:
+                current_data_point->temperature = *((float*)(read_buf + 1));
+                break;
+            case 0x02:
+                current_data_point->humidity = *((float*)(read_buf + 1));
+                break;
+            case 0x03:
+                current_data_point->wind_speed = *((float*)(read_buf + 1));
+                break;
+            case 0x04:
+                current_data_point->wind_direction = *((float*)(read_buf + 1));
+                break;
+            case 0x05:
+                current_data_point->pressure = *((float*)(read_buf + 1));
+                break;
+            case 0x06:
+                current_data_point->precipitation = *((float*)(read_buf + 1));
+                break;
+            case 0x07:
+                current_data_point->uv_index = *((float*)(read_buf + 1));
+                break;
+        }
     }
     return;
 }
