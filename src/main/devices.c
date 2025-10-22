@@ -200,14 +200,14 @@ void readSerial(int serial_port, Data_Point* current_data_point){
     0x07 - UV Index
     */
 
-    tcflush(serial_port, TCIFLUSH);
+    //tcflush(serial_port, TCIFLUSH);
     unsigned char read_buf[8];
-    memset(read_buf, 0, sizeof(read_buf));
+    memset(read_buf, 0x00, sizeof(read_buf));
     
     //If error opening serial port, return
     if(serial_port < 0){
         LOG_ERROR("Error opening serial port");
-        return read_buf;
+        return;
     }
     //Create termios struct
     //Helps control serial communication with flags
@@ -218,7 +218,7 @@ void readSerial(int serial_port, Data_Point* current_data_point){
     if(tcgetattr(serial_port, &tty) != 0){
         LOG_ERROR("Error getting termios attributes");
         close(serial_port);
-        return read_buf;
+        return;
     }
     //Set baud rate (Must match Serial.begin number in Arduino)
     cfsetispeed(&tty, B9600);
@@ -243,21 +243,37 @@ void readSerial(int serial_port, Data_Point* current_data_point){
     tty.c_iflag &= ~(IXON | IXOFF | IXANY); // No software flow control
 
     // Set timeout
-    tty.c_cc[VMIN] = 16; //16 bytes minimum to read
-    tty.c_cc[VTIME] = 0; // No read timeout
+    tty.c_cc[VMIN] = 1; //1 bytes minimum to read
+    tty.c_cc[VTIME] = 5; // 5 second read timeout
 
     // Save settings
     if (tcsetattr(serial_port, TCSANOW, &tty) != 0) {
         LOG_ERROR("Error setting termios attributes");
         close(serial_port);
-        return read_buf;
-    }
-
-    // Read data (8 bytes)
-    if(read(serial_port, &read_buf, sizeof(read_buf)) < 0){
         return;
     }
 
+    //Get to start of message
+    char a = 0x00;
+    while(a != '\n'){
+        read(serial_port, &a, 1);
+    }
+
+    // Read data (8 bytes)
+    int total_read = 0;
+    int bytes_to_read = 8;
+    while (total_read < bytes_to_read) {
+        int n = read(serial_port, read_buf + total_read, bytes_to_read - total_read);
+        if (n > 0) {
+            total_read += n;
+        } else if (n == 0) {
+            // Timeout or no data
+            break;
+        } else {
+            LOG_ERROR("read error");
+            break;
+        }
+    }
     /*
     if (num_bytes < 0) {
         LOG_ERROR("Error reading from serial port");
@@ -277,7 +293,11 @@ void readSerial(int serial_port, Data_Point* current_data_point){
     0x06 - Precipitation
     0x07 - UV Index
     */
-
+    /*
+    for(int i = 0; i < sizeof(read_buf) - 1; i++){
+        printf("%#x ", read_buf[i]);//*(read_buf + i));
+    }
+    */
     switch(read_buf[0]){
         case 0x01:
             current_data_point->temperature = *((float*)(read_buf + 1));
@@ -301,6 +321,5 @@ void readSerial(int serial_port, Data_Point* current_data_point){
             current_data_point->uv_index = *((float*)(read_buf + 1));
             break;
     }
-    memset(read_buf, 0, sizeof(read_buf));
     return;
 }

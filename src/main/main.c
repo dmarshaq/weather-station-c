@@ -31,6 +31,21 @@ static Application_State app_state;
 
 int main(void) {
 
+    int serial_port = open("/dev/ttyACM0", O_RDWR);
+    Data_Point balls;
+    tcflush(serial_port, TCIFLUSH);
+    for(int i = 0; i < 7; i++){
+        readSerial(serial_port, &balls);
+    }
+    printf("%f ", balls.temperature);
+    printf("%f ", balls.humidity);
+    printf("%f ", balls.wind_speed);
+    printf("%f ", balls.wind_direction);
+    printf("%f ", balls.pressure);
+    printf("%f ", balls.precipitation);
+    printf("%f ", balls.uv_index);
+    close(serial_port);
+
     // Set all values to zero in app_state.
     app_state = (Application_State) {0};
 

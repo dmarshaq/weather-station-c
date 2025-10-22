@@ -4,6 +4,16 @@
 #include <stdio.h>
 #include <time.h>
 
+#include <time.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <string.h>
+#include <dirent.h>
+#include <limits.h>
+#include <libgen.h>
+#include <sys/stat.h>
+#include <termios.h>
+#include <fcntl.h>
 
 
 typedef enum device_state {
@@ -83,6 +93,8 @@ int devices_connect();
  */
 int devices_collect_data(Data_Point *data_point);
 
+void readSerial(int serial_port, Data_Point* current_data_point);
+//Run tcflush(serial_port, TCIFLUSH) before running and after opening serial port
 
 
 
