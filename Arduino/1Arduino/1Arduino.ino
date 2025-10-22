@@ -5,7 +5,7 @@
 Adafruit_BME280 bme;
 Adafruit_ltr390 ltr = Adafruit_LTR390();
 const float UVScale = 1; //Scale to multiply raw UV index by to 
-char out[16];
+char out[8];
 
 void setup() {
   Serial.begin(9600);
@@ -23,26 +23,30 @@ void loop() {
   float num = ltr.readUVS();
   out[0] = 0x07;
   memcpy(&out[1], &num, sizeof(float));
-  Serial.write(out, 16);
+  Serial.write(0xAA);
+  Serial.write(out, 8);
   //BME280 Temp
   memset(out, 0x00, sizeof(out));
   num = bme.readTemperature();
   out[0] = 0x01;
   memcpy(&out[1], &num, sizeof(float));
-  Serial.write(out, 16);
+  Serial.write(0xAA);
+  Serial.write(out, 8);
   //Pressure (Pascals)
   memset(out, 0x00, sizeof(out));
   num = bme.readPressure();
   out[0] = 0x05;
   memcpy(&out[1], &num, sizeof(float));
-  Serial.write(out, 16);
+  Serial.write(0xAA);
+  Serial.write(out, 8);
 
   //Humidity
   memset(out, 0x00, sizeof(out));
   num = bme.readHumidity();
   out[0] = 0x02;
   memcpy(&out[1], &num, sizeof(float));
-  Serial.write(out, 16);
+  Serial.write(0xAA);
+  Serial.write(out, 8);
   
   delay(1000);
 }

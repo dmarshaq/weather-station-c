@@ -7,7 +7,7 @@ const float mmPerTilt = 0.173;
 float mmTotal = 0;
 bool state = 0;
 bool previousState = 0;
-char[16] out;
+char[8] out;
 
 void loop() {
   state = digitalRead(9) < 470;
@@ -19,7 +19,8 @@ void loop() {
   memset(out, 0x00, sizeof(out));
   out[0] = 0x06;
   memcpy(&out[1], &mmTotal, sizeof(float));
-  Serial.write(out, 16);
+  Serial.write(0xAA);
+  Serial.write(out, 8);
 
   delay(500);
 }
