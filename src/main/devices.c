@@ -208,7 +208,59 @@ void devices_ensure_usb_connected(Device *usb) {
 }
 
 void devices_detect_i2c() {
-    // @Incomplete: Write implementation.
+    DIR *d = opendir("/sys/bus/i2c/devices");
+    struct dirent *entry;
+
+    if (d) {
+        while ((entry = readdir(d)) != NULL) {
+            if (entry->d_name[0] == '.') continue;
+            if (strncmp(entry->d_name, "i2c-", 4) == 0) continue;
+
+            char *dash = strchr(entry->d_name, '-');
+            if (!dash) continue;
+
+            int bus = atoi(entry->d_name);
+            char devpath[128];
+            snprintf(devpath, sizeof(devpath), "/dev/i2c-%d", bus);
+
+            struct stat st;
+            if (stat(devpath, &st) != 0) continue;
+
+            char name[64] = {0};
+            char namepath[PATH_MAX];
+            snprintf(namepath, sizeof(namepath), "/sys/bus/i2c/devices/%s/name", entry->d_name);
+
+            FILE *f = fopen(namepath, "r");
+            if (f) {
+                if (fgets(name, sizeof(name), f)) {
+                    size_t n = strcspn(name, "\r\n");
+                    name[n] = '\0';
+                }
+                fclose(f);
+            }
+            if (name[0] == '\0') {
+                strncpy(name, entry->d_name, sizeof(name) - 1);
+                name[sizeof(name) - 1] = '\0';
+            }
+
+            devices_add(name, DEVICE_I2C_SENSOR, devpath);
+        }
+        closedir(d);
+    }
+
+    d = opendir("/dev");
+    if (d) {
+        while ((entry = readdir(d)) != NULL) {
+            if (strncmp(entry->d_name, "i2c-", 4) != 0) continue;
+
+            char path[128] = "/dev/";
+            if (strlen(path) + strlen(entry->d_name) >= sizeof(path)) continue;
+            strcat(path, entry->d_name);
+
+            devices_add(entry->d_name, DEVICE_I2C_SENSOR, path);
+        }
+        closedir(d);
+    }
 }
 
 void devices_detect_arduino() {
