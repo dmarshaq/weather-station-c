@@ -25,6 +25,20 @@ static const SDL_Color COLOR_PANEL = {33, 33, 36, 255};
 
 
 
+static Data_Graph_Specification specs[7] = {
+    { -10.0f, 30.0f, 5.0f,          offsetof(struct data_point, temperature),  ((SDL_Color) {240, 181, 74, 255}) },
+    { 0.0f, 100.0f, 10.0f,          offsetof(struct data_point, humidity),  ((SDL_Color) {0, 122, 189, 255}) },
+    { 0.0f, 27.0f, 3.0f,            offsetof(struct data_point, wind_speed),  ((SDL_Color) {64, 179, 157, 255}) },
+    { 0.0f, 360.0f, 30.0f,          offsetof(struct data_point, wind_direction), ((SDL_Color) {160, 199, 64, 255}) },
+    { 948.75f, 1048.75f, 10.0f,    offsetof(struct data_point, pressure), ((SDL_Color) {219, 111, 134, 255}) },
+    { 0.0f, 90.0f, 15.0f,           offsetof(struct data_point, precipitation), ((SDL_Color) {195, 75, 165, 255}) },
+    { 0.0f, 15.0f, 3.0f,            offsetof(struct data_point, uv_index), ((SDL_Color) {139, 119, 194, 255}) },
+};
+
+static int current_spec = 0;
+
+
+
 
 static Application_State app_state;
 
@@ -89,12 +103,6 @@ int main(void) {
     LOG_INFO("Initted devices module.");
 
 
-    if (drawer_init(&app_state.window, app_state.renderer) != 0) {
-        LOG_ERROR("Couldn't initialize drawer module.");
-        goto error_return;
-    }
-
-    LOG_INFO("Initted drawer module.");
 
 
 
@@ -109,6 +117,13 @@ int main(void) {
 
     LOG_INFO("Successfully loaded font.");
 
+
+    if (drawer_init(&app_state.window, app_state.renderer, font_open_sans_14) != 0) {
+        LOG_ERROR("Couldn't initialize drawer module.");
+        goto error_return;
+    }
+
+    LOG_INFO("Initted drawer module.");
 
 
     // Set current_data_point to be the first data point in the array.
@@ -216,39 +231,54 @@ int main(void) {
         char value[16];
 
 
-        drawer_text(370, 42 + line_height * 0, "Temperature", font_open_sans_14, COLOR_TEXT);
+        drawer_text(370, 42 + line_height * 0, "Temperature", font_open_sans_14, current_spec == 0 ? specs[current_spec].color : COLOR_TEXT);
         snprintf(value, 16, "%.1f*C", app_state.stream.current_data_point->temperature);
-        drawer_text(690, 42 + line_height * 0, value, font_open_sans_14, COLOR_TEXT);
+        drawer_text(690, 42 + line_height * 0, value, font_open_sans_14, current_spec == 0 ? specs[current_spec].color : COLOR_TEXT);
 
 
-        drawer_text(370, 42 + line_height * 1, "Humidity", font_open_sans_14, COLOR_TEXT);
+        drawer_text(370, 42 + line_height * 1, "Humidity", font_open_sans_14, current_spec == 1 ? specs[current_spec].color : COLOR_TEXT);
         snprintf(value, 16, "%.0f%%RH", app_state.stream.current_data_point->humidity);
-        drawer_text(690, 42 + line_height * 1, value, font_open_sans_14, COLOR_TEXT);
+        
+        drawer_text(690, 42 + line_height * 1, value, font_open_sans_14, current_spec == 1 ? specs[current_spec].color : COLOR_TEXT);
 
-        drawer_text(370, 42 + line_height * 2, "Wind Speed", font_open_sans_14, COLOR_TEXT);
+        drawer_text(370, 42 + line_height * 2, "Wind Speed", font_open_sans_14, current_spec == 2 ? specs[current_spec].color : COLOR_TEXT);
         snprintf(value, 16, "%.1fm/s", app_state.stream.current_data_point->wind_speed);
-        drawer_text(690, 42 + line_height * 2, value, font_open_sans_14, COLOR_TEXT);
+        drawer_text(690, 42 + line_height * 2, value, font_open_sans_14, current_spec == 2 ? specs[current_spec].color : COLOR_TEXT);
 
-        drawer_text(370, 42 + line_height * 3, "Wind Direction", font_open_sans_14, COLOR_TEXT);
+        drawer_text(370, 42 + line_height * 3, "Wind Direction", font_open_sans_14, current_spec == 3 ? specs[current_spec].color : COLOR_TEXT);
         snprintf(value, 16, "%.0f*", app_state.stream.current_data_point->wind_direction);
-        drawer_text(690, 42 + line_height * 3, value, font_open_sans_14, COLOR_TEXT);
+        drawer_text(690, 42 + line_height * 3, value, font_open_sans_14, current_spec == 3 ? specs[current_spec].color : COLOR_TEXT);
 
-        drawer_text(370, 42 + line_height * 4, "Atmospheric Pressure", font_open_sans_14, COLOR_TEXT);
+        drawer_text(370, 42 + line_height * 4, "Atmospheric Pressure", font_open_sans_14, current_spec == 4 ? specs[current_spec].color : COLOR_TEXT);
         snprintf(value, 16, "%.1fhPa", app_state.stream.current_data_point->pressure);
-        drawer_text(690, 42 + line_height * 4, value, font_open_sans_14, COLOR_TEXT);
+        drawer_text(690, 42 + line_height * 4, value, font_open_sans_14, current_spec == 4 ? specs[current_spec].color : COLOR_TEXT);
 
-        drawer_text(370, 42 + line_height * 5, "Precipitation", font_open_sans_14, COLOR_TEXT);
+        drawer_text(370, 42 + line_height * 5, "Precipitation", font_open_sans_14, current_spec == 5 ? specs[current_spec].color : COLOR_TEXT);
         snprintf(value, 16, "%.1fmm", app_state.stream.current_data_point->precipitation);
-        drawer_text(690, 42 + line_height * 5, value, font_open_sans_14, COLOR_TEXT);
+        drawer_text(690, 42 + line_height * 5, value, font_open_sans_14, current_spec == 5 ? specs[current_spec].color : COLOR_TEXT);
 
-        drawer_text(370, 42 + line_height * 6, "UV Intensity", font_open_sans_14, COLOR_TEXT);
+        drawer_text(370, 42 + line_height * 6, "UV Intensity", font_open_sans_14, current_spec == 6 ? specs[current_spec].color : COLOR_TEXT);
         snprintf(value, 16, "%.0f", app_state.stream.current_data_point->uv_index);
-        drawer_text(690, 42 + line_height * 6, value, font_open_sans_14, COLOR_TEXT);
+        drawer_text(690, 42 + line_height * 6, value, font_open_sans_14, current_spec == 6 ? specs[current_spec].color : COLOR_TEXT);
 
         
         // Graph.
         drawer_rect(10, 195, 780, 275, COLOR_PANEL);
-        drawer_graph_data(80, 210, 632, 232, &app_state.stream, (Data_Graph_Specification) {0});
+        drawer_graph_data(80, 210, 632, 232, &app_state.stream, specs[current_spec]);
+
+        
+        static const float spec_period = 1.0f;
+        static float spec_timer = 0.0f; // Start at 0.
+        
+        // Changing what graph is displaying.
+        if (spec_timer > spec_period) {
+            current_spec++;
+            if (current_spec > 6) {
+                current_spec = 0;
+            }
+            spec_timer = 0.0f;
+        }
+        spec_timer += app_state.time_info.delta_time;
 
 
         drawer_text_centered(0, 600, app_state.window.width, "Press ESCAPE to exit        Demo of fake data displayed", font_open_sans_16, (SDL_Color) {255, 255, 255, 255});

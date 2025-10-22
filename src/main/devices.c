@@ -221,6 +221,8 @@ void devices_reset_state() {
     }
 }
 
+#define USB_FEATURE_OFF
+
 int devices_detect() {
     devices_reset_state();
 
@@ -228,10 +230,10 @@ int devices_detect() {
     devices_detect_i2c();
     devices_detect_arduino();
 
-    // Just for test searching other usb.
+#ifndef USB_FEATURE_OFF
     Device *usb = NULL;
     for (int i = 0; i < dev_info->devices_length; i++) {
-        if (strcmp(dev_info->devices[i].name, "sdb") != 0) {
+        if (dev_info->type == DEVICE_USB_DRIVE) {
             usb = dev_info->devices + i;
             break;
         }
@@ -240,6 +242,22 @@ int devices_detect() {
     if (usb != NULL) {
         devices_ensure_usb_connected(usb);
     }
+#else
+    if (dev_info->csv_output == NULL) {
+        // Open csv for output of data.
+        FILE *file = fopen("data.csv", "a");
+
+        if (file == NULL) {
+            LOG_ERROR("Couldn't open file to output data on the mounted usb at 'data.csv'.");
+            perror("Error");
+            return 0;
+        }
+
+        dev_info->csv_output = file;
+    }
+#endif
+
+
 
     return 0;
 }

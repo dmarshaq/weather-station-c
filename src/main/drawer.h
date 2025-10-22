@@ -13,7 +13,11 @@
 
 // @Incomplete: Implement struct.
 typedef struct data_graph_specification {
-
+    float min_y;
+    float max_y;
+    float cell_height;
+    u8 struct_member_value_offset;
+    SDL_Color color;
 } Data_Graph_Specification;
 
 
@@ -21,7 +25,7 @@ typedef struct data_graph_specification {
 /**
  * Inits drawer.
  */
-int drawer_init(Window_Info *window, SDL_Renderer *renderer);
+int drawer_init(Window_Info *window, SDL_Renderer *renderer, TTF_Font *font);
 
 /**
  * Draws rectangle to the screen.
