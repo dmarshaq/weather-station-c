@@ -6,8 +6,8 @@ Table Of Contents
 -----------------
 * [Quick Start](#quick-start)
     * [Requirements](#requirements)
-    * [How to Build](#how-to-build)
-    * [How to Run](#how-to-run)
+    * [Bootstrap](#bootstrap)
+    * [Rebuild and Run](#rebuild-and-run)
 * [Features](#features)
 
 Quick Start
@@ -16,12 +16,12 @@ Quick Start
 * Git
 * GCC - (GNU C Compiler)
 * C Standard Library
-* Docker - (If not using Linux)
+* Linux Environment
+* SDL2 Core and TTF Libraries
 
 
 
-#### How to Build
-To build a project:
+#### Bootstrap
 
 1. Open a terminal and navigate to your projects directory.
 2. Clone the repository:
@@ -32,21 +32,30 @@ To build a project:
     ```bash
     cd weather-station-c
     ```
-4. Run the script to compile and run the program.
+4. Compile the builder program.
    ```bash
-   ./run.sh
+   gcc -o nob nob.c
    ```
-   - Or build docker image (If not using Linux).
-   ```bash
-   docker build -t weather-station-c .
-   ```
-    
-#### How to Run
-To run the project (If not using Linux):
-
-1. Run the docker container.
+5. Build the project.
     ```bash
-    docker run --rm -it weather-station-c
+    ./nob
+    ```
+6. Run the main.
+    ```bash
+    bin/main
+    ```
+
+    
+#### Rebuild and Run
+
+1. To rebuild simply call builder program.
+    ```bash
+    ./nob
+    ```
+
+2. Run the main.
+    ```bash
+    bin/main
     ```
 
 
