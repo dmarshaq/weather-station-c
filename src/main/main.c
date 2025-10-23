@@ -48,6 +48,8 @@ int main(void) {
     // Set all values to zero in app_state.
     app_state = (Application_State) {0};
 
+    SDL_setenv("SDL_VIDEODRIVER", "KMSDRM", 1);
+
     // Initializing SDL Video.
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
         LOG_ERROR("SDL_Init Error: %s.", SDL_GetError());
@@ -64,14 +66,21 @@ int main(void) {
     
     LOG_INFO("Initted SDL ttf.");
 
+
+    SDL_SetHint(SDL_HINT_VIDEO_HIGHDPI_DISABLED, "1");
+
+
     // Creating SDL Window.
     app_state.window.ptr = SDL_CreateWindow(
         "SDL2 Window",
         SDL_WINDOWPOS_UNDEFINED,
         SDL_WINDOWPOS_UNDEFINED,
-        640, 480,
-        SDL_WINDOW_FULLSCREEN
+        800, 480,
+        SDL_WINDOW_SHOWN | SDL_WINDOW_FULLSCREEN
     );
+
+    SDL_ShowCursor(SDL_DISABLE);
+
 
     if (!app_state.window.ptr) {
         LOG_ERROR("SDL_CreateWindow Error: %s.", SDL_GetError());
