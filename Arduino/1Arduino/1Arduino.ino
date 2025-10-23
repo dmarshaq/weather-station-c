@@ -30,14 +30,14 @@ void loop() {
   num = bme.readTemperature();
   out[0] = 0x01;
   memcpy(&out[1], &num, sizeof(float));
-  Serial.write(0xAA);
+  //Serial.write(0xAA);
   Serial.write(out, 8);
   //Pressure (Pascals)
   memset(out, 0x00, sizeof(out));
   num = bme.readPressure();
   out[0] = 0x05;
   memcpy(&out[1], &num, sizeof(float));
-  Serial.write(0xAA);
+  //Serial.write(0xAA);
   Serial.write(out, 8);
 
   //Humidity
@@ -45,7 +45,7 @@ void loop() {
   num = bme.readHumidity();
   out[0] = 0x02;
   memcpy(&out[1], &num, sizeof(float));
-  Serial.write(0xAA);
+  //Serial.write(0xAA);
   Serial.write(out, 7);
   Serial.write(0xBB);
   
