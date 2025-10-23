@@ -369,11 +369,11 @@ void readSerial(int serial_port, Data_Point* current_data_point){
     }
 
     //Get to start of message
+    unsigned char a = 0x00;
+    while(a != 0xAA){
+        read(serial_port, &a, 1);
+    }
     while(read_buf[7] != 0xBB){
-        char a = 0x00;
-        while(a != 0xAA){
-            read(serial_port, &a, 1);
-        }
 
         // Read data (8 bytes)
         int total_read = 0;
