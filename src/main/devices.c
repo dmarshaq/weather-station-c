@@ -68,6 +68,12 @@ void devices_add(char *name, Device_Type type, char *path) {
     strcpy(dev_info->devices[dev_info->devices_length].path, path);
 
     switch(dev_info->devices[dev_info->devices_length].type) {
+        case DEVICE_UNKNOWN:
+            break;
+        case DEVICE_USB_DRIVE:
+            break;
+        case DEVICE_I2C_SENSOR:
+            break;
         case DEVICE_ARDUINO:
             int serial_port = open(dev_info->devices[dev_info->devices_length].path, O_RDWR);
             tcflush(serial_port, TCIFLUSH);
@@ -288,23 +294,38 @@ int devices_detect() {
     return 0;
 }
 
+
+#define SIMULATED_DATA
+
 int devices_collect_data(Data_Point *data_point) {
     if (data_point == NULL) {
         return -1;
     }
 
-    // Used to approximate values
-    // https://weatherspark.com/y/20372/Average-Weather-in-Buffalo-New-York-United-States-Year-Round
+#ifdef SIMULATED_DATA
+    data_point->temperature = 17.8f + ((float)rand() / (float)RAND_MAX * (26.1f - 17.8f));
+    data_point->humidity = 0.0f + ((float)rand() / (float)RAND_MAX * (31.0f - 0.0f));
+    data_point->wind_speed = 2.68f + ((float)rand() / (float)RAND_MAX * (5.32f - 2.68f));
+    int direction = rand() % 4;
+    switch(direction) {
+        case 0:
+            strcpy(data_point->wind_direction,  "North");
+            break;
+        case 1:
+            strcpy(data_point->wind_direction,  "South");
+            break;
+        case 2:
+            strcpy(data_point->wind_direction,  "West");
+            break;
+        case 3:
+            strcpy(data_point->wind_direction,  "East");
+            break;
+    }
+    data_point->pressure = 979.35f + ((float)rand() / (float)RAND_MAX * (1048.75f - 979.35f));
+    data_point->precipitation = 30.48f + ((float)rand() / (float)RAND_MAX * (73.66f - 30.48f));
+    data_point->uv_index = 0.0f + ((float)rand() / (float)RAND_MAX * (15.0f - 0.0f));
 
-    // data_point->temperature = 17.8f + ((float)rand() / (float)RAND_MAX * (26.1f - 17.8f));
-    // data_point->humidity = 0.0f + ((float)rand() / (float)RAND_MAX * (31.0f - 0.0f));
-    // data_point->wind_speed = 2.68f + ((float)rand() / (float)RAND_MAX * (5.32f - 2.68f));
-    // data_point->wind_direction = 0.0f + ((float)rand() / (float)RAND_MAX * (360.0f - 0.0f));
-    // data_point->pressure = 979.35f + ((float)rand() / (float)RAND_MAX * (1048.75f - 979.35f));
-    // data_point->precipitation = 30.48f + ((float)rand() / (float)RAND_MAX * (73.66f - 30.48f));
-    // data_point->uv_index = 0.0f + ((float)rand() / (float)RAND_MAX * (15.0f - 0.0f));
-
-
+#else
     Device *arduino = NULL;
     for (int i = 0; i < dev_info->devices_length; i++) {
         if (dev_info->devices[i].type == DEVICE_ARDUINO) {
@@ -316,13 +337,13 @@ int devices_collect_data(Data_Point *data_point) {
         }
     }
 
+#endif
 
     time_t t = time(NULL);
     struct tm *local_time = localtime(&t);
     if (local_time != NULL) {
         data_point->timestamp = *local_time;
     }
-
 
 
     return 0;
@@ -395,10 +416,10 @@ void read_serial(int fd, Data_Point* current_data_point) {
 	char *start;
 	char *end;
 
-	for (size_t i = 0; i < ptr - buffer; i++) {
+	for (size_t i = 0; i < (size_t)(ptr - buffer); i++) {
 		if (buffer[i] == 0xAA) {
 			start = buffer + i;
-			for (size_t j = i; j < ptr - buffer; j++) {
+			for (size_t j = i; j < (size_t)(ptr - buffer); j++) {
 				if (buffer[j] == 0xBB) {
 					end = buffer + j + 1;
 					goto loop_exit;
@@ -424,7 +445,7 @@ loop_exit:
 	   */
 
 	// Because first and last bytes are 0xAA and 0xBB we exclude them.
-	for (size_t i = 1; i < end - start - 1; i++) {
+	for (size_t i = 1; i < (size_t)(end - start - 1); i++) {
 		printf("0x%02X: ", start[i]);
 		switch(start[i]) {
 			case 0x01:
@@ -441,7 +462,7 @@ loop_exit:
 				break;
 			case 0x04:
 				printf("Wind direction: %s\n", start + i + 1);
-                current_data_point->wind_direction = str_parse_float(CSTR(start + i + 1));
+                strcpy(current_data_point->wind_direction, start + i + 1);
 				break;
 			case 0x05:
 				printf("Pressure: %s\n", start + i + 1);

@@ -25,7 +25,7 @@ typedef struct window_info {
     int height;
 } Window_Info;
 
-#define UPDATE_STEP_TIME 2000 
+#define UPDATE_STEP_TIME 1000 
 #define GRAPH_TIME_LENGTH 60
 #define DATA_LENGTH ((GRAPH_TIME_LENGTH * 1000) / UPDATE_STEP_TIME)
 

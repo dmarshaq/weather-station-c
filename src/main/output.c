@@ -11,6 +11,7 @@
 int output_flush_file_completely(FILE *csv) {
     fflush(csv);
     fsync(fileno(csv));
+    return 0;
 }
 
 
@@ -19,7 +20,7 @@ int output_append_data_point(FILE *csv, Data_Point *data_point) {
         return -1;
     }
 
-    if(fprintf(csv, "%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%i-%02i-%02i,%02i:%02i:%02i\n",
+    if(fprintf(csv, "%.1f,%.1f,%.1f,%s,%.1f,%.1f,%.1f,%i-%02i-%02i,%02i:%02i:%02i\n",
         data_point->temperature,
         data_point->humidity,
         data_point->wind_speed,

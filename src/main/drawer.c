@@ -77,9 +77,6 @@ void drawer_graph_data(int x, int y, int width, int height, Data_Stream *stream,
                 case offsetof(struct data_point, wind_speed):
                     snprintf(buffer, 128, "%.1fm/s", (graph_cell_height * i) + graph_min_y);
                     break;
-                case offsetof(struct data_point, wind_direction):
-                    snprintf(buffer, 128, "%.0f*", (graph_cell_height * i) + graph_min_y);
-                    break;
                 case offsetof(struct data_point, pressure):
                     snprintf(buffer, 128, "%.1fhPa", (graph_cell_height * i) + graph_min_y);
                     break;

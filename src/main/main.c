@@ -12,9 +12,6 @@
 
 
 
-    // 500 Milliseconds per single update loop.
-                                             // Equal to about: 1 Frame / 0.5 Seconds = 2 FPS.
-                                             // Because sensors do not usually update faster then 0.5 seconds.
 
 
 // Variables for styling, color values taken from design.
@@ -25,11 +22,11 @@ static const SDL_Color COLOR_PANEL = {33, 33, 36, 255};
 
 
 
-static Data_Graph_Specification specs[7] = {
+static Data_Graph_Specification specs[] = {
     { -10.0f, 30.0f, 5.0f,          offsetof(struct data_point, temperature),  ((SDL_Color) {240, 181, 74, 255}) },
     { 0.0f, 100.0f, 10.0f,          offsetof(struct data_point, humidity),  ((SDL_Color) {0, 122, 189, 255}) },
     { 0.0f, 27.0f, 3.0f,            offsetof(struct data_point, wind_speed),  ((SDL_Color) {64, 179, 157, 255}) },
-    { 0.0f, 360.0f, 30.0f,          offsetof(struct data_point, wind_direction), ((SDL_Color) {160, 199, 64, 255}) },
+    // { 0.0f, 360.0f, 30.0f,          offsetof(struct data_point, wind_direction), ((SDL_Color) {160, 199, 64, 255}) },
     { 948.75f, 1048.75f, 10.0f,    offsetof(struct data_point, pressure), ((SDL_Color) {219, 111, 134, 255}) },
     { 0.0f, 90.0f, 15.0f,           offsetof(struct data_point, precipitation), ((SDL_Color) {195, 75, 165, 255}) },
     { 0.0f, 15.0f, 3.0f,            offsetof(struct data_point, uv_index), ((SDL_Color) {139, 119, 194, 255}) },
@@ -42,13 +39,16 @@ static int current_spec = 0;
 
 static Application_State app_state;
 
+#define DEV_BUILD
 
 int main(void) {
 
     // Set all values to zero in app_state.
     app_state = (Application_State) {0};
 
+#ifndef DEV_BUILD
     SDL_setenv("SDL_VIDEODRIVER", "KMSDRM", 1);
+#endif
 
     // Initializing SDL Video.
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
@@ -221,7 +221,26 @@ int main(void) {
         drawer_rect(10, 10, 340, 175, COLOR_PANEL);
         drawer_text_centered(10, 15, 340, "Health Check", font_open_sans_16, COLOR_TEXT);
         for (int i = 0; i < app_state.devices_info.devices_length; i++) {
-            drawer_text(20, 42 + line_height * i, app_state.devices_info.devices[i].name, font_open_sans_16, COLOR_TEXT);
+            char hc_buffer[128];
+            char *write = hc_buffer;
+            switch (app_state.devices_info.devices[i].type) {
+                case DEVICE_UNKNOWN:
+                    write += snprintf(hc_buffer, 128, "Unknown:  ");
+                    break;
+                case DEVICE_USB_DRIVE:
+                    write += snprintf(hc_buffer, 128, "USB:  ");
+                    break;
+                case DEVICE_I2C_SENSOR:
+                    write += snprintf(hc_buffer, 128, "I2C:  ");
+                    break;
+                case DEVICE_ARDUINO:
+                    write += snprintf(hc_buffer, 128, "Arduino:  ");
+                    break;
+            }
+
+            snprintf(write, 128 - (write - hc_buffer), app_state.devices_info.devices[i].name);
+
+            drawer_text(20, 42 + line_height * i, hc_buffer, font_open_sans_16, COLOR_TEXT);
             switch (app_state.devices_info.devices[i].state) {
                 case OFFLINE:
                     drawer_text_right(20, 42 + line_height * i, 320, "Offline", font_open_sans_14, COLOR_ERR);
@@ -254,21 +273,21 @@ int main(void) {
         snprintf(value, 16, "%.1fm/s", app_state.stream.current_data_point->wind_speed);
         drawer_text(690, 42 + line_height * 2, value, font_open_sans_14, current_spec == 2 ? specs[current_spec].color : COLOR_TEXT);
 
-        drawer_text(370, 42 + line_height * 3, "Wind Direction", font_open_sans_14, current_spec == 3 ? specs[current_spec].color : COLOR_TEXT);
-        snprintf(value, 16, "%.0f*", app_state.stream.current_data_point->wind_direction);
-        drawer_text(690, 42 + line_height * 3, value, font_open_sans_14, current_spec == 3 ? specs[current_spec].color : COLOR_TEXT);
+        drawer_text(370, 42 + line_height * 3, "Wind Direction", font_open_sans_14, COLOR_TEXT);
+        snprintf(value, 16, "%s", app_state.stream.current_data_point->wind_direction);
+        drawer_text(690, 42 + line_height * 3, value, font_open_sans_14, COLOR_TEXT);
 
-        drawer_text(370, 42 + line_height * 4, "Atmospheric Pressure", font_open_sans_14, current_spec == 4 ? specs[current_spec].color : COLOR_TEXT);
+        drawer_text(370, 42 + line_height * 4, "Atmospheric Pressure", font_open_sans_14, current_spec == 3 ? specs[current_spec].color : COLOR_TEXT);
         snprintf(value, 16, "%.1fhPa", app_state.stream.current_data_point->pressure);
-        drawer_text(690, 42 + line_height * 4, value, font_open_sans_14, current_spec == 4 ? specs[current_spec].color : COLOR_TEXT);
+        drawer_text(690, 42 + line_height * 4, value, font_open_sans_14, current_spec == 3 ? specs[current_spec].color : COLOR_TEXT);
 
-        drawer_text(370, 42 + line_height * 5, "Precipitation", font_open_sans_14, current_spec == 5 ? specs[current_spec].color : COLOR_TEXT);
+        drawer_text(370, 42 + line_height * 5, "Precipitation", font_open_sans_14, current_spec == 4 ? specs[current_spec].color : COLOR_TEXT);
         snprintf(value, 16, "%.1fmm", app_state.stream.current_data_point->precipitation);
-        drawer_text(690, 42 + line_height * 5, value, font_open_sans_14, current_spec == 5 ? specs[current_spec].color : COLOR_TEXT);
+        drawer_text(690, 42 + line_height * 5, value, font_open_sans_14, current_spec == 4 ? specs[current_spec].color : COLOR_TEXT);
 
-        drawer_text(370, 42 + line_height * 6, "UV Intensity", font_open_sans_14, current_spec == 6 ? specs[current_spec].color : COLOR_TEXT);
+        drawer_text(370, 42 + line_height * 6, "UV Intensity", font_open_sans_14, current_spec == 5 ? specs[current_spec].color : COLOR_TEXT);
         snprintf(value, 16, "%.0f", app_state.stream.current_data_point->uv_index);
-        drawer_text(690, 42 + line_height * 6, value, font_open_sans_14, current_spec == 6 ? specs[current_spec].color : COLOR_TEXT);
+        drawer_text(690, 42 + line_height * 6, value, font_open_sans_14, current_spec == 5 ? specs[current_spec].color : COLOR_TEXT);
 
         
         // Graph.
@@ -282,7 +301,7 @@ int main(void) {
         // Changing what graph is displaying.
         if (spec_timer > spec_period) {
             current_spec++;
-            if (current_spec > 6) {
+            if (current_spec > 5) {
                 current_spec = 0;
             }
             spec_timer = 0.0f;

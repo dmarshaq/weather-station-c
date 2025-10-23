@@ -63,7 +63,7 @@ typedef struct data_point {
     float temperature;        // °c
     float humidity;           // %rh
     float wind_speed;         // m/s
-    float wind_direction;     // degrees [0–360)
+    char wind_direction[16];  // string
     float pressure;           // hpa
     float precipitation;      // mm
     float uv_index;           // 0–15
