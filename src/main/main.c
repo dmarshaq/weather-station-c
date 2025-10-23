@@ -12,7 +12,7 @@
 
 
 
-static const u32 UPDATE_STEP_TIME = 500;     // 500 Milliseconds per single update loop.
+    // 500 Milliseconds per single update loop.
                                              // Equal to about: 1 Frame / 0.5 Seconds = 2 FPS.
                                              // Because sensors do not usually update faster then 0.5 seconds.
 
@@ -264,10 +264,10 @@ int main(void) {
         
         // Graph.
         drawer_rect(10, 195, 780, 275, COLOR_PANEL);
-        drawer_graph_data(80, 210, 632, 232, &app_state.stream, specs[current_spec]);
+        drawer_graph_data(90, 210, 632, 232, &app_state.stream, specs[current_spec]);
 
         
-        static const float spec_period = 1.0f;
+        static const float spec_period = 8.0f;
         static float spec_timer = 0.0f; // Start at 0.
         
         // Changing what graph is displaying.

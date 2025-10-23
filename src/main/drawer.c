@@ -39,6 +39,8 @@ void drawer_rect(int x, int y, int width, int height, SDL_Color color) {
     SDL_RenderFillRect(renderer, &rect);
 }
 
+#define VERTICAL_LINE_TIME_INTERVAL 7.5f
+
 void drawer_graph_data(int x, int y, int width, int height, Data_Stream *stream, Data_Graph_Specification specs) {
     // Buffer used to store formatted values.
     char buffer[128];
@@ -96,12 +98,13 @@ void drawer_graph_data(int x, int y, int width, int height, Data_Stream *stream,
 
     // Drawing vertical grid lines, always 9.
     SDL_SetRenderDrawColor(renderer, 105, 105, 105, 255);
-    for (int i = 0; i < 9; i++) {
-        SDL_RenderDrawLine(renderer, x + (width / 8) * i, y, x + (width / 8) * i, y + height);
+    int vertical_lines = (float)GRAPH_TIME_LENGTH / (float)VERTICAL_LINE_TIME_INTERVAL;
+    for (int i = 0; i < vertical_lines + 1; i++) {
+        SDL_RenderDrawLine(renderer, x + (width / vertical_lines) * i, y, x + (width / vertical_lines) * i, y + height);
         
 
         if (i % 2 == 0) {
-            snprintf(buffer, 128, "%ds", -60 + (15 * i / 2));
+            snprintf(buffer, 128, "%ds", -(GRAPH_TIME_LENGTH) + (15 * i / 2));
             drawer_text(x + (width / 8) * i, y + height, buffer, font, (SDL_Color){105, 105, 105, 255});
         }
     }

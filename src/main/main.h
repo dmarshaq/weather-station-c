@@ -25,9 +25,9 @@ typedef struct window_info {
     int height;
 } Window_Info;
 
-
-
-#define DATA_LENGTH 120
+#define UPDATE_STEP_TIME 2000 
+#define GRAPH_TIME_LENGTH 60
+#define DATA_LENGTH ((GRAPH_TIME_LENGTH * 1000) / UPDATE_STEP_TIME)
 
 typedef struct data_stream {
     Data_Point data[DATA_LENGTH];

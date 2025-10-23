@@ -1,6 +1,7 @@
 #include "main/devices.h"
 
 #include "core/log.h"
+#include "core/str.h"
 
 #include <time.h>
 #include <stdlib.h>
@@ -309,9 +310,7 @@ int devices_collect_data(Data_Point *data_point) {
         if (dev_info->devices[i].type == DEVICE_ARDUINO) {
             arduino = dev_info->devices + i;
             if (arduino->serial_port > 0) {
-                LOG_INFO("Reading from arduino '%s'.", arduino->name);
                 read_serial(arduino->serial_port, data_point);
-                LOG_INFO("Exit reading from arduino '%s'.", arduino->name);
             }
             break;
         }
@@ -347,7 +346,7 @@ void read_serial(int fd, Data_Point* current_data_point) {
 
 	//Get serial port attributes and store them in tty variable
 	if(tcgetattr(fd, &tty) != 0){
-		LOG_ERROR("Error getting termios attributes");
+		LOG_ERROR("Couldn't get termios attributes.");
 		close(fd);
 		return;
 	}
@@ -385,7 +384,7 @@ void read_serial(int fd, Data_Point* current_data_point) {
 			if (errno == EINTR)
 				continue;
 
-			fprintf(stderr, "Couldn't read");
+			fprintf(stderr, "Couldn't read arduino serial port.");
 			break;
 		}
 
@@ -411,8 +410,8 @@ void read_serial(int fd, Data_Point* current_data_point) {
 	return;
 
 loop_exit:
-	printf("---------------------------\n");
 
+    LOG_INFO("Received: %d bytes from the arduino, identified payload of size: %d bytes.", ptr - buffer, end - start);
 
 	/* Byte codes
 	   0x01 - Temperature
@@ -430,29 +429,35 @@ loop_exit:
 		switch(start[i]) {
 			case 0x01:
 				printf("Temperature: %s\n", start + i + 1);
+                current_data_point->temperature = str_parse_float(CSTR(start + i + 1));
 				break;
 			case 0x02:
 				printf("Humidity: %s\n", start + i + 1);
+                current_data_point->humidity = str_parse_float(CSTR(start + i + 1));
 				break;
 			case 0x03:
 				printf("Wind speed: %s\n", start + i + 1);
+                current_data_point->wind_speed = str_parse_float(CSTR(start + i + 1));
 				break;
 			case 0x04:
 				printf("Wind direction: %s\n", start + i + 1);
+                current_data_point->wind_direction = str_parse_float(CSTR(start + i + 1));
 				break;
 			case 0x05:
 				printf("Pressure: %s\n", start + i + 1);
+                current_data_point->pressure = str_parse_float(CSTR(start + i + 1));
 				break;
 			case 0x06:
 				printf("Precipitation: %s\n", start + i + 1);
+                current_data_point->precipitation = str_parse_float(CSTR(start + i + 1));
 				break;
 			case 0x07:
 				printf("UV Index: %s\n", start + i + 1);
+                current_data_point->uv_index = str_parse_float(CSTR(start + i + 1));
 				break;
 		}
 		i += strlen(start + i + 1) + 1;
 	}
-	printf("\n---------------------------\n");
 
     return;
 }
