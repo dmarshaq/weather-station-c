@@ -34,6 +34,10 @@ typedef struct device {
     Device_State state;
 
     char path[128];
+
+    union {
+        int serial_port;
+    };
 } Device;
 
 
@@ -86,7 +90,7 @@ int devices_detect();
  */
 int devices_collect_data(Data_Point *data_point);
 
-void readSerial(int serial_port, Data_Point* current_data_point);
+void read_serial(int serial_port, Data_Point* current_data_point);
 //Run tcflush(serial_port, TCIFLUSH) before running and after opening serial port
 
 

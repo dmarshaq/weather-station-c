@@ -65,6 +65,13 @@ void devices_add(char *name, Device_Type type, char *path) {
     // Save path.
     strcpy(dev_info->devices[dev_info->devices_length].path, path);
 
+    switch(dev_info->devices[dev_info->devices_length].type) {
+        case DEVICE_ARDUINO:
+            int serial_port = open(dev_info->devices[dev_info->devices_length].path, O_RDWR);
+            tcflush(serial_port, TCIFLUSH);
+            dev_info->devices[dev_info->devices_length].serial_port = serial_port;
+            break;
+    }
 
     dev_info->devices_length++;
 }
@@ -248,7 +255,7 @@ int devices_detect() {
 #ifndef USB_FEATURE_OFF
     Device *usb = NULL;
     for (int i = 0; i < dev_info->devices_length; i++) {
-        if (dev_info->type == DEVICE_USB_DRIVE) {
+        if (dev_info->devices[i].type == DEVICE_USB_DRIVE) {
             usb = dev_info->devices + i;
             break;
         }
@@ -272,6 +279,8 @@ int devices_detect() {
     }
 #endif
 
+    
+
 
 
     return 0;
@@ -285,13 +294,27 @@ int devices_collect_data(Data_Point *data_point) {
     // Used to approximate values
     // https://weatherspark.com/y/20372/Average-Weather-in-Buffalo-New-York-United-States-Year-Round
 
-    data_point->temperature = 17.8f + ((float)rand() / (float)RAND_MAX * (26.1f - 17.8f));
-    data_point->humidity = 0.0f + ((float)rand() / (float)RAND_MAX * (31.0f - 0.0f));
-    data_point->wind_speed = 2.68f + ((float)rand() / (float)RAND_MAX * (5.32f - 2.68f));
-    data_point->wind_direction = 0.0f + ((float)rand() / (float)RAND_MAX * (360.0f - 0.0f));
-    data_point->pressure = 979.35f + ((float)rand() / (float)RAND_MAX * (1048.75f - 979.35f));
-    data_point->precipitation = 30.48f + ((float)rand() / (float)RAND_MAX * (73.66f - 30.48f));
-    data_point->uv_index = 0.0f + ((float)rand() / (float)RAND_MAX * (15.0f - 0.0f));
+    // data_point->temperature = 17.8f + ((float)rand() / (float)RAND_MAX * (26.1f - 17.8f));
+    // data_point->humidity = 0.0f + ((float)rand() / (float)RAND_MAX * (31.0f - 0.0f));
+    // data_point->wind_speed = 2.68f + ((float)rand() / (float)RAND_MAX * (5.32f - 2.68f));
+    // data_point->wind_direction = 0.0f + ((float)rand() / (float)RAND_MAX * (360.0f - 0.0f));
+    // data_point->pressure = 979.35f + ((float)rand() / (float)RAND_MAX * (1048.75f - 979.35f));
+    // data_point->precipitation = 30.48f + ((float)rand() / (float)RAND_MAX * (73.66f - 30.48f));
+    // data_point->uv_index = 0.0f + ((float)rand() / (float)RAND_MAX * (15.0f - 0.0f));
+
+
+    Device *arduino = NULL;
+    for (int i = 0; i < dev_info->devices_length; i++) {
+        if (dev_info->devices[i].type == DEVICE_ARDUINO) {
+            arduino = dev_info->devices + i;
+            if (arduino->serial_port > 0) {
+                LOG_INFO("Reading from arduino '%s'.", arduino->name);
+                read_serial(arduino->serial_port, data_point);
+            }
+            break;
+        }
+    }
+
 
     time_t t = time(NULL);
     struct tm *local_time = localtime(&t);
@@ -299,29 +322,31 @@ int devices_collect_data(Data_Point *data_point) {
         data_point->timestamp = *local_time;
     }
 
+
+
     return 0;
 }
 
-void readSerial(int serial_port, Data_Point* current_data_point){
+void read_serial(int serial_port, Data_Point* current_data_point){
     //256 bit buffer to read from serial port
 
     /* Byte codes
-    0x01 - Temperature
-    0x02 - Humidity
-    0x03 - Wind speed
-    0x04 - Wind direction
-    0x05 - Pressure
-    0x06 - Precipitation
-    0x07 - UV Index
-    */
+       0x01 - Temperature
+       0x02 - Humidity
+       0x03 - Wind speed
+       0x04 - Wind direction
+       0x05 - Pressure
+       0x06 - Precipitation
+       0x07 - UV Index
+       */
 
     //tcflush(serial_port, TCIFLUSH);
     unsigned char read_buf[8];
     memset(read_buf, 0x00, sizeof(read_buf));
-    
+
     //If error opening serial port, return
     if(serial_port < 0){
-        LOG_ERROR("Error opening serial port");
+        printf("Error opening serial port");
         return;
     }
     //Create termios struct
@@ -331,7 +356,7 @@ void readSerial(int serial_port, Data_Point* current_data_point){
     memset(&tty, 0, sizeof(tty));
     //Get serial port attributes and store them in tty variable
     if(tcgetattr(serial_port, &tty) != 0){
-        LOG_ERROR("Error getting termios attributes");
+        printf("Error getting termios attributes");
         close(serial_port);
         return;
     }
@@ -339,7 +364,7 @@ void readSerial(int serial_port, Data_Point* current_data_point){
     cfsetispeed(&tty, B9600);
     //Output speed only required if writing to serial port
     //cfsetospeed(&tty, B9600);
-    
+
     //8 bits, no parity (extra error correction bits), 1 stop bit (8n1)
     //&= - Bitwise operator where x &= y is equivalent to x = x & y
     tty.c_cflag &= ~PARENB;
@@ -363,78 +388,79 @@ void readSerial(int serial_port, Data_Point* current_data_point){
 
     // Save settings
     if (tcsetattr(serial_port, TCSANOW, &tty) != 0) {
-        LOG_ERROR("Error setting termios attributes");
+        printf("Error setting termios attributes");
         close(serial_port);
         return;
     }
 
-    //Get to start of message
-    char a = 0x00;
-    while(a != 0xAA){
-        read(serial_port, &a, 1);
-    }
-
-    // Read data (8 bytes)
-    int total_read = 0;
-    int bytes_to_read = 8;
-    while (total_read < bytes_to_read) {
-        int n = read(serial_port, read_buf + total_read, bytes_to_read - total_read);
-        if (n > 0) {
-            total_read += n;
-        } else if (n == 0) {
-            // Timeout or no data
-            break;
-        } else {
-            LOG_ERROR("read error");
-            break;
+    while(read_buf[7] != 0xBB){
+        //Get to start of message
+        unsigned char a = 0x00;
+        while(a != 0xAA){
+            read(serial_port, &a, 1);
         }
-    }
-    /*
-    if (num_bytes < 0) {
-        LOG_ERROR("Error reading from serial port");
-        close(serial_port);
-        return read_buf;
-    }
-    */
+        // Read data (8 bytes)
+        int total_read = 0;
+        int bytes_to_read = 8;
+        while (total_read < bytes_to_read) {
+            int n = read(serial_port, read_buf + total_read, bytes_to_read - total_read);
+            if (n > 0) {
+                total_read += n;
+            } else if (n == 0) {
+                // Timeout or no data
+                break;
+            } else {
+                printf("read error");
+                break;
+            }
+        }
+        /*
+           if (num_bytes < 0) {
+           printf("Error reading from serial port");
+           close(serial_port);
+           return read_buf;
+           }
+           */
 
-    //close(serial_port);
+        //close(serial_port);
 
-    /* Byte codes
-    0x01 - Temperature
-    0x02 - Humidity
-    0x03 - Wind speed
-    0x04 - Wind direction
-    0x05 - Pressure
-    0x06 - Precipitation
-    0x07 - UV Index
-    */
-    /*
-    for(int i = 0; i < sizeof(read_buf) - 1; i++){
-        printf("%#x ", read_buf[i]);//*(read_buf + i));
-    }
-    */
-    switch(read_buf[0]){
-        case 0x01:
-            current_data_point->temperature = *((float*)(read_buf + 1));
-            break;
-        case 0x02:
-            current_data_point->humidity = *((float*)(read_buf + 1));
-            break;
-        case 0x03:
-            current_data_point->wind_speed = *((float*)(read_buf + 1));
-            break;
-        case 0x04:
-            current_data_point->wind_direction = *((float*)(read_buf + 1));
-            break;
-        case 0x05:
-            current_data_point->pressure = *((float*)(read_buf + 1));
-            break;
-        case 0x06:
-            current_data_point->precipitation = *((float*)(read_buf + 1));
-            break;
-        case 0x07:
-            current_data_point->uv_index = *((float*)(read_buf + 1));
-            break;
+        /* Byte codes
+           0x01 - Temperature
+           0x02 - Humidity
+           0x03 - Wind speed
+           0x04 - Wind direction
+           0x05 - Pressure
+           0x06 - Precipitation
+           0x07 - UV Index
+           */
+        /*
+           for(int i = 0; i < sizeof(read_buf) - 1; i++){
+           printf("%#x ", read_buf[i]);//*(read_buf + i));
+           }
+           */
+        switch(read_buf[0]){
+            case 0x01:
+                current_data_point->temperature = *((float*)(read_buf + 1));
+                break;
+            case 0x02:
+                current_data_point->humidity = *((float*)(read_buf + 1));
+                break;
+            case 0x03:
+                current_data_point->wind_speed = *((float*)(read_buf + 1));
+                break;
+            case 0x04:
+                current_data_point->wind_direction = *((float*)(read_buf + 1));
+                break;
+            case 0x05:
+                current_data_point->pressure = *((float*)(read_buf + 1));
+                break;
+            case 0x06:
+                current_data_point->precipitation = *((float*)(read_buf + 1));
+                break;
+            case 0x07:
+                current_data_point->uv_index = *((float*)(read_buf + 1));
+                break;
+        }
     }
     return;
 }
