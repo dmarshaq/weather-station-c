@@ -17,11 +17,11 @@ typedef enum log_level {
  * If you don't want some information displayed, just comment out define macros.
  */
 #define LOG_INFO_COLOR
-#define LOG_INFO_TIME
-#define LOG_INFO_THREAD
-#define LOG_INFO_FILE
-#define LOG_INFO_LINE
-#define LOG_INFO_FUNC
+// #define LOG_INFO_TIME
+// #define LOG_INFO_THREAD
+// #define LOG_INFO_FILE
+// #define LOG_INFO_LINE
+// #define LOG_INFO_FUNC
 
 
 #define LOG_INFO(format, ...)       log_print(LOG_LEVEL_INFO, __FILE__, __LINE__, __func__, format, ##__VA_ARGS__)

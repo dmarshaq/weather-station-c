@@ -39,7 +39,7 @@ static int current_spec = 0;
 
 static Application_State app_state;
 
-#define DEV_BUILD
+// #define DEV_BUILD
 
 int main(void) {
 
@@ -98,6 +98,8 @@ int main(void) {
         SDL_Quit();
         return 1;
     }
+
+    SDL_Texture *texture = SDL_CreateTexture(app_state.renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, 800, 480);
 
     LOG_INFO("Created SDL_Renderer.");
 
@@ -214,6 +216,7 @@ int main(void) {
 
 
         // Clear screen with black.
+	SDL_SetRenderTarget(app_state.renderer, texture);
         SDL_SetRenderDrawColor(app_state.renderer, 22, 23, 25, 255);
         SDL_RenderClear(app_state.renderer);
 
@@ -314,6 +317,8 @@ int main(void) {
 
 
         // Display rendered shapes on the scree.
+	SDL_SetRenderTarget(app_state.renderer, NULL);
+	SDL_RenderCopyEx(app_state.renderer, texture, NULL, NULL, 0, NULL, SDL_FLIP_VERTICAL | SDL_FLIP_HORIZONTAL);
         SDL_RenderPresent(app_state.renderer);
 
 
